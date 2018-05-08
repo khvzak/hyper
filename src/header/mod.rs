@@ -86,8 +86,7 @@ use std::iter::{FromIterator, IntoIterator};
 use std::ops::{Deref, DerefMut};
 use std::{mem, fmt};
 
-use {httparse, traitobject};
-use typeable::Typeable;
+use httparse;
 use unicase::Ascii;
 
 use self::internals::{Item, VecMap, Entry};
@@ -126,7 +125,7 @@ pub trait Header: Clone + Any + Send + Sync {
 /// A trait for any object that will represent a header field and value.
 ///
 /// This trait represents the formatting of a `Header` for output to a TcpStream.
-pub trait HeaderFormat: fmt::Debug + HeaderClone + Any + Typeable + Send + Sync {
+pub trait HeaderFormat: fmt::Debug + HeaderClone + Any + ::GetType + Send + Sync {
     /// Format a header to be output into a TcpStream.
     ///
     /// This method is not allowed to introduce an Err not produced
@@ -245,12 +244,12 @@ mod sealed {
 impl HeaderFormat + Send + Sync {
     #[inline]
     unsafe fn downcast_ref_unchecked<T: 'static>(&self) -> &T {
-        mem::transmute(traitobject::data(self))
+        &*(mem::transmute::<*const _, (*const (), *const ())>(self).0 as *const T)
     }
 
     #[inline]
     unsafe fn downcast_mut_unchecked<T: 'static>(&mut self) -> &mut T {
-        mem::transmute(traitobject::data_mut(self))
+        &mut *(mem::transmute::<*mut _, (*mut (), *mut ())>(self).0 as *mut T)
     }
 }
 

@@ -9,15 +9,12 @@ use std::mem;
 use std::io;
 use std::time::Duration;
 
-use typeable::Typeable;
-
 use header::Headers;
 use http::RawStatus;
 use url::Url;
 
 use method;
 use version;
-use traitobject;
 
 /// The trait provides an API for creating new `HttpMessage`s depending on the underlying HTTP
 /// protocol.
@@ -49,7 +46,7 @@ pub struct ResponseHead {
 }
 
 /// The trait provides an API for sending an receiving HTTP messages.
-pub trait HttpMessage: Write + Read + Send + Any + Typeable + Debug {
+pub trait HttpMessage: Write + Read + Send + Any + ::GetType + Debug {
     /// Initiates a new outgoing request.
     ///
     /// Only the request's head is provided (in terms of the `RequestHead` struct).
@@ -79,16 +76,15 @@ pub trait HttpMessage: Write + Read + Send + Any + Typeable + Debug {
 
 impl HttpMessage {
     unsafe fn downcast_ref_unchecked<T: 'static>(&self) -> &T {
-        mem::transmute(traitobject::data(self))
+        &*(mem::transmute::<*const _, (*const (), *const ())>(self).0 as *const T)
     }
 
     unsafe fn downcast_mut_unchecked<T: 'static>(&mut self) -> &mut T {
-        mem::transmute(traitobject::data_mut(self))
+        &mut *(mem::transmute::<*mut _, (*mut (), *mut ())>(self).0 as *mut T)
     }
 
     unsafe fn downcast_unchecked<T: 'static>(self: Box<HttpMessage>) -> Box<T>  {
-        let raw: *mut HttpMessage = mem::transmute(self);
-        mem::transmute(traitobject::data_mut(raw))
+        Box::from_raw(mem::transmute::<*mut _, (*mut (), *mut ())>(Box::into_raw(self)).0 as *mut T)
     }
 }
 

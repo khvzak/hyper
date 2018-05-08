@@ -8,9 +8,6 @@ use std::sync::Arc;
 
 use std::time::Duration;
 
-use typeable::Typeable;
-use traitobject;
-
 /// The write-status indicating headers have not been written.
 pub enum Fresh {}
 
@@ -61,7 +58,7 @@ impl<'a, N: NetworkListener + 'a> Iterator for NetworkConnections<'a, N> {
 }
 
 /// An abstraction over streams that a `Server` can utilize.
-pub trait NetworkStream: Read + Write + Any + Send + Typeable {
+pub trait NetworkStream: Read + Write + Any + Send + ::GetType {
     /// Get the remote address of the underlying connection.
     fn peer_addr(&mut self) -> io::Result<SocketAddr>;
 
@@ -111,16 +108,15 @@ impl fmt::Debug for Box<NetworkStream + Send> {
 
 impl NetworkStream {
     unsafe fn downcast_ref_unchecked<T: 'static>(&self) -> &T {
-        mem::transmute(traitobject::data(self))
+        &*(mem::transmute::<*const _, (*const (), *const ())>(self).0 as *const T)
     }
 
     unsafe fn downcast_mut_unchecked<T: 'static>(&mut self) -> &mut T {
-        mem::transmute(traitobject::data_mut(self))
+        &mut *(mem::transmute::<*mut _, (*mut (), *mut ())>(self).0 as *mut T)
     }
 
     unsafe fn downcast_unchecked<T: 'static>(self: Box<NetworkStream>) -> Box<T>  {
-        let raw: *mut NetworkStream = mem::transmute(self);
-        mem::transmute(traitobject::data_mut(raw))
+        Box::from_raw(mem::transmute::<*mut _, (*mut (), *mut ())>(Box::into_raw(self)).0 as *mut T)
     }
 }
 
@@ -166,16 +162,15 @@ impl NetworkStream {
 
 impl NetworkStream + Send {
     unsafe fn downcast_ref_unchecked<T: 'static>(&self) -> &T {
-        mem::transmute(traitobject::data(self))
+        &*(mem::transmute::<*const _, (*const (), *const ())>(self).0 as *const T)
     }
 
     unsafe fn downcast_mut_unchecked<T: 'static>(&mut self) -> &mut T {
-        mem::transmute(traitobject::data_mut(self))
+        &mut *(mem::transmute::<*mut _, (*mut (), *mut ())>(self).0 as *mut T)
     }
 
     unsafe fn downcast_unchecked<T: 'static>(self: Box<NetworkStream + Send>) -> Box<T>  {
-        let raw: *mut NetworkStream = mem::transmute(self);
-        mem::transmute(traitobject::data_mut(raw))
+        Box::from_raw(mem::transmute::<*mut _, (*mut (), *mut ())>(Box::into_raw(self)).0 as *mut T)
     }
 }
 

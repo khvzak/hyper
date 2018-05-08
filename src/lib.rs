@@ -134,8 +134,6 @@ extern crate time;
 extern crate unicase;
 extern crate httparse;
 extern crate num_cpus;
-extern crate traitobject;
-extern crate typeable;
 
 extern crate language_tags;
 
@@ -183,7 +181,6 @@ pub mod mime {
     pub use mime_crate::*;
 }
 
-
 fn _assert_types() {
     fn _assert_send<T: Send>() {}
     fn _assert_sync<T: Sync>() {}
@@ -198,3 +195,15 @@ fn _assert_types() {
     _assert_sync::<error::Error>();
     _assert_sync::<::client::pool::Pool<::net::DefaultConnector>>();
 }
+
+use std::any::{Any, TypeId};
+
+#[doc(hidden)]
+pub trait GetType: Any {
+    #[inline(always)]
+    fn get_type(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+
+impl<T: Any> GetType for T {}
