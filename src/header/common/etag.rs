@@ -14,16 +14,19 @@ header! {
     /// prefixed by a weakness indicator.
     ///
     /// # ABNF
-    /// ```plain
+    ///
+    /// ```text
     /// ETag       = entity-tag
     /// ```
     ///
     /// # Example values
+    ///
     /// * `"xyzzy"`
     /// * `W/"xyzzy"`
     /// * `""`
     ///
     /// # Examples
+    ///
     /// ```
     /// use hyper::header::{Headers, ETag, EntityTag};
     ///
@@ -82,6 +85,9 @@ header! {
             None::<ETag>);
         test_header!(test14,
             vec![b"matched-\"dquotes\""],
+            None::<ETag>);
+        test_header!(test15,
+            vec![b"\""],
             None::<ETag>);
     }
 }

@@ -10,7 +10,8 @@ header! {
     /// response.
     ///
     /// # ABNF
-    /// ```plain
+    ///
+    /// ```text
     /// Accept-Language = 1#( language-range [ weight ] )
     /// language-range  = <language-range, see [RFC4647], Section 2.1>
     /// ```
@@ -20,6 +21,7 @@ header! {
     /// * `en-us;q=1.0, en;q=0.5, fr`
     ///
     /// # Examples
+    ///
     /// ```
     /// use hyper::LanguageTag;
     /// use hyper::header::{Headers, AcceptLanguage, qitem};
@@ -34,18 +36,19 @@ header! {
     ///     ])
     /// );
     /// ```
+    ///
     /// ```
     /// # extern crate hyper;
     /// # #[macro_use] extern crate language_tags;
-    /// # use hyper::header::{Headers, AcceptLanguage, QualityItem, Quality, qitem};
+    /// # use hyper::header::{Headers, AcceptLanguage, QualityItem, q, qitem};
     /// #
     /// # fn main() {
     /// let mut headers = Headers::new();
     /// headers.set(
     ///     AcceptLanguage(vec![
     ///         qitem(langtag!(da)),
-    ///         QualityItem::new(langtag!(en;;;GB), Quality(800)),
-    ///         QualityItem::new(langtag!(en), Quality(700)),
+    ///         QualityItem::new(langtag!(en;;;GB), q(800)),
+    ///         QualityItem::new(langtag!(en), q(700)),
     ///     ])
     /// );
     /// # }
@@ -59,9 +62,9 @@ header! {
         test_header!(
             test2, vec![b"en-US, en; q=0.5, fr"],
             Some(AcceptLanguage(vec![
-                qitem(langtag!(en;;;US)),
-                QualityItem::new(langtag!(en), Quality(500)),
-                qitem(langtag!(fr)),
+                qitem("en-US".parse().unwrap()),
+                QualityItem::new("en".parse().unwrap(), q(500)),
+                qitem("fr".parse().unwrap()),
         ])));
     }
 }

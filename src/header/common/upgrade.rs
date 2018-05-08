@@ -1,6 +1,6 @@
 use std::fmt::{self, Display};
 use std::str::FromStr;
-use unicase::UniCase;
+use unicase;
 
 header! {
     /// `Upgrade` header, defined in [RFC7230](http://tools.ietf.org/html/rfc7230#section-6.7)
@@ -16,7 +16,8 @@ header! {
     /// change.
     ///
     /// # ABNF
-    /// ```plain
+    ///
+    /// ```text
     /// Upgrade          = 1#protocol
     ///
     /// protocol         = protocol-name ["/" protocol-version]
@@ -25,15 +26,18 @@ header! {
     /// ```
     ///
     /// # Example values
+    ///
     /// * `HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11`
     ///
     /// # Examples
+    ///
     /// ```
     /// use hyper::header::{Headers, Upgrade, Protocol, ProtocolName};
     ///
     /// let mut headers = Headers::new();
     /// headers.set(Upgrade(vec![Protocol::new(ProtocolName::WebSocket, None)]));
     /// ```
+    ///
     /// ```
     /// use hyper::header::{Headers, Upgrade, Protocol, ProtocolName};
     ///
@@ -74,7 +78,7 @@ header! {
     }
 }
 
-/// A protocol name used to identify a spefic protocol. Names are case-sensitive
+/// A protocol name used to identify a specific protocol. Names are case-sensitive
 /// except for the `WebSocket` value.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ProtocolName {
@@ -99,7 +103,7 @@ impl FromStr for ProtocolName {
             "TLS" => ProtocolName::Tls,
             "h2c" => ProtocolName::H2c,
             _ => {
-                if UniCase(s) == UniCase("websocket") {
+                if unicase::eq_ascii(s, "websocket") {
                     ProtocolName::WebSocket
                 } else {
                     ProtocolName::Unregistered(s.to_owned())

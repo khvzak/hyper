@@ -1,7 +1,6 @@
 use std::fmt::{self, Display};
 use std::str::FromStr;
-
-#[allow(unused_imports)]
+#[allow(unused, deprecated)]
 use std::ascii::AsciiExt;
 
 use self::Charset::*;
@@ -10,7 +9,9 @@ use self::Charset::*;
 ///
 /// The string representation is normalised to upper case.
 ///
-/// See http://www.iana.org/assignments/character-sets/character-sets.xhtml
+/// See [http://www.iana.org/assignments/character-sets/character-sets.xhtml][url].
+///
+/// [url]: http://www.iana.org/assignments/character-sets/character-sets.xhtml
 #[derive(Clone,Debug,PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum Charset{
@@ -93,7 +94,7 @@ impl Charset {
             Gb2312 => "GB2312",
             Big5 => "5",
             Koi8_R => "KOI8-R",
-            Ext(ref s) => &s
+            Ext(ref s) => s
         }
     }
 }

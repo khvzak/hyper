@@ -14,7 +14,8 @@ use header::{Header, HeaderFormat};
 /// agent for the realm of the resource being requested.
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Authorization = credentials
 /// ```
 ///
@@ -23,6 +24,7 @@ use header::{Header, HeaderFormat};
 /// * `Bearer fpKL54jvWmEGVoRdCNjG`
 ///
 /// # Examples
+///
 /// ```
 /// use hyper::header::{Headers, Authorization};
 ///
@@ -42,6 +44,7 @@ use header::{Header, HeaderFormat};
 ///    )
 /// );
 /// ```
+///
 /// ```
 /// use hyper::header::{Headers, Authorization, Bearer};
 ///
@@ -134,7 +137,8 @@ pub struct Basic {
     /// The username as a possibly empty string
     pub username: String,
     /// The password. `None` if the `:` delimiter character was not
-    /// part of the parsed input.
+    /// part of the parsed input. Note: A compliant client MUST
+    /// always send a password (which may be the empty string).
     pub password: Option<String>
 }
 
@@ -153,10 +157,11 @@ impl Scheme for Basic {
             text.push_str(&pass[..]);
         }
 
-        f.write_str(&encode(text.as_bytes()))
+        f.write_str(&encode(&text))
     }
 }
 
+/// creates a Basic from a base-64 encoded, `:`-delimited utf-8 string
 impl FromStr for Basic {
     type Err = ::Error;
     fn from_str(s: &str) -> ::Result<Basic> {
@@ -177,13 +182,13 @@ impl FromStr for Basic {
                         password: password
                     })
                 },
-                Err(e) => {
-                    debug!("Basic::from_utf8 error={:?}", e);
+                Err(_) => {
+                    debug!("Basic::from_str utf8 error");
                     Err(::Error::Header)
                 }
             },
-            Err(e) => {
-                debug!("Basic::from_base64 error={:?}", e);
+            Err(_) => {
+                debug!("Basic::from_str base64 error");
                 Err(::Error::Header)
             }
         }

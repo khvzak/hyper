@@ -2,7 +2,7 @@ use std::fmt::{self, Display};
 use std::str::FromStr;
 
 use header::{Header, HeaderFormat};
-use header::parsing::{from_one_raw_str, from_comma_delimited};
+use header::parsing::from_one_raw_str;
 
 /// `Range` header, defined in [RFC7233](https://tools.ietf.org/html/rfc7233#section-3.1)
 ///
@@ -12,7 +12,8 @@ use header::parsing::{from_one_raw_str, from_comma_delimited};
 /// representation data.
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Range =	byte-ranges-specifier / other-ranges-specifier
 /// other-ranges-specifier = other-range-unit "=" other-range-set
 /// other-range-set = 1*VCHAR
@@ -27,6 +28,7 @@ use header::parsing::{from_one_raw_str, from_comma_delimited};
 /// ```
 ///
 /// # Example values
+///
 /// * `bytes=1000-`
 /// * `bytes=-2000`
 /// * `bytes=0-1,30-40`
@@ -35,6 +37,7 @@ use header::parsing::{from_one_raw_str, from_comma_delimited};
 /// * `custom_unit=xxx-yyy`
 ///
 /// # Examples
+///
 /// ```
 /// use hyper::header::{Headers, Range, ByteRangeSpec};
 ///
@@ -46,6 +49,7 @@ use header::parsing::{from_one_raw_str, from_comma_delimited};
 /// headers.clear();
 /// headers.set(Range::Unregistered("letters".to_owned(), "a-f".to_owned()));
 /// ```
+///
 /// ```
 /// use hyper::header::{Headers, Range};
 ///
@@ -126,19 +130,15 @@ impl FromStr for Range {
     type Err = ::Error;
 
     fn from_str(s: &str) -> ::Result<Range> {
-        let mut iter = s.splitn(2, "=");
+        let mut iter = s.splitn(2, '=');
 
         match (iter.next(), iter.next()) {
             (Some("bytes"), Some(ranges)) => {
-                match from_comma_delimited(&[ranges]) {
-                    Ok(ranges) => {
-                        if ranges.is_empty() {
-                            return Err(::Error::Header);
-                        }
-                        Ok(Range::Bytes(ranges))
-                    },
-                    Err(_) => Err(::Error::Header)
+                let ranges = from_comma_delimited(ranges);
+                if ranges.is_empty() {
+                    return Err(::Error::Header);
                 }
+                Ok(Range::Bytes(ranges))
             }
             (Some(unit), Some(range_str)) if unit != "" && range_str != "" => {
                 Ok(Range::Unregistered(unit.to_owned(), range_str.to_owned()))
@@ -153,7 +153,7 @@ impl FromStr for ByteRangeSpec {
     type Err = ::Error;
 
     fn from_str(s: &str) -> ::Result<ByteRangeSpec> {
-        let mut parts = s.splitn(2, "-");
+        let mut parts = s.splitn(2, '-');
 
         match (parts.next(), parts.next()) {
             (Some(""), Some(end)) => {
@@ -171,6 +171,16 @@ impl FromStr for ByteRangeSpec {
             _ => Err(::Error::Header)
         }
     }
+}
+
+fn from_comma_delimited<T: FromStr>(s: &str) -> Vec<T> {
+    s.split(',')
+        .filter_map(|x| match x.trim() {
+            "" => None,
+            y => Some(y)
+        })
+        .filter_map(|x| x.parse().ok())
+        .collect()
 }
 
 impl Header for Range {

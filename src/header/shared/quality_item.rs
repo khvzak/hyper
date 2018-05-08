@@ -1,7 +1,11 @@
+#[allow(unused, deprecated)]
+use std::ascii::AsciiExt;
 use std::cmp;
 use std::default::Default;
 use std::fmt;
 use std::str;
+
+use self::internal::IntoQuality;
 
 /// Represents a quality used in quality values.
 ///
@@ -10,7 +14,7 @@ use std::str;
 /// # Implementation notes
 ///
 /// The quality value is defined as a number between 0 and 1 with three decimal places. This means
-/// there are 1000 possible values. Since floating point numbers are not exact and the smallest
+/// there are 1001 possible values. Since floating point numbers are not exact and the smallest
 /// floating point data type (`f32`) consumes four bytes, hyper uses an `u16` value to store the
 /// quality internally. For performance reasons you may set quality directly to a value between
 /// 0 and 1000 e.g. `Quality(532)` matches the quality `q=0.532`.
@@ -18,17 +22,7 @@ use std::str;
 /// [RFC7231 Section 5.3.1](https://tools.ietf.org/html/rfc7231#section-5.3.1)
 /// gives more information on quality values in HTTP header fields.
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Quality(pub u16);
-
-impl fmt::Display for Quality {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.0 {
-            1000 => Ok(()),
-            0 => f.write_str("; q=0"),
-            x => write!(f, "; q=0.{}", format!("{:03}", x).trim_right_matches('0'))
-        }
-    }
-}
+pub struct Quality(u16);
 
 impl Default for Quality {
     fn default() -> Quality {
@@ -66,19 +60,30 @@ impl<T: PartialEq> cmp::PartialOrd for QualityItem<T> {
 
 impl<T: fmt::Display> fmt::Display for QualityItem<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.item, format!("{}", self.quality))
+        try!(fmt::Display::fmt(&self.item, f));
+        match self.quality.0 {
+            1000 => Ok(()),
+            0 => f.write_str("; q=0"),
+            x => write!(f, "; q=0.{}", format!("{:03}", x).trim_right_matches('0'))
+        }
     }
 }
 
 impl<T: str::FromStr> str::FromStr for QualityItem<T> {
     type Err = ::Error;
     fn from_str(s: &str) -> ::Result<QualityItem<T>> {
+        if !s.is_ascii() {
+            return Err(::Error::Header);
+        }
         // Set defaults used if parsing fails.
         let mut raw_item = s;
         let mut quality = 1f32;
 
         let parts: Vec<&str> = s.rsplitn(2, ';').map(|x| x.trim()).collect();
         if parts.len() == 2 {
+            if parts[0].len() < 2 {
+                return Err(::Error::Header);
+            }
             let start = &parts[0][0..2];
             if start == "q=" || start == "Q=" {
                 let q_part = &parts[0][2..parts[0].len()];
@@ -106,6 +111,7 @@ impl<T: str::FromStr> str::FromStr for QualityItem<T> {
     }
 }
 
+#[inline]
 fn from_f32(f: f32) -> Quality {
     // this function is only used internally. A check that `f` is within range
     // should be done before calling this method. Just in case, this
@@ -114,16 +120,51 @@ fn from_f32(f: f32) -> Quality {
     Quality((f * 1000f32) as u16)
 }
 
-/// Convinience function to wrap a value in a `QualityItem`
+/// Convenience function to wrap a value in a `QualityItem`
 /// Sets `q` to the default 1.0
 pub fn qitem<T>(item: T) -> QualityItem<T> {
     QualityItem::new(item, Default::default())
 }
 
-/// Convenience function to create a `Quality` from a float.
-pub fn q(f: f32) -> Quality {
-    assert!(f >= 0f32 && f <= 1f32, "q value must be between 0.0 and 1.0");
-    from_f32(f)
+/// Convenience function to create a `Quality` from a float or integer.
+///
+/// Implemented for `u16` and `f32`. Panics if value is out of range.
+pub fn q<T: IntoQuality>(val: T) -> Quality {
+    val.into_quality()
+}
+
+mod internal {
+    use super::Quality;
+
+    // TryFrom is probably better, but it's not stable. For now, we want to
+    // keep the functionality of the `q` function, while allowing it to be
+    // generic over `f32` and `u16`.
+    //
+    // `q` would panic before, so keep that behavior. `TryFrom` can be
+    // introduced later for a non-panicking conversion.
+
+    pub trait IntoQuality: Sealed + Sized {
+        fn into_quality(self) -> Quality;
+    }
+
+    impl IntoQuality for f32 {
+        fn into_quality(self) -> Quality {
+            assert!(self >= 0f32 && self <= 1f32, "float must be between 0.0 and 1.0");
+            super::from_f32(self)
+        }
+    }
+
+    impl IntoQuality for u16 {
+        fn into_quality(self) -> Quality {
+            assert!(self <= 1000, "u16 must be between 0 and 1000");
+            Quality(self)
+        }
+    }
+
+
+    pub trait Sealed {}
+    impl Sealed for u16 {}
+    impl Sealed for f32 {}
 }
 
 #[cfg(test)]
@@ -132,23 +173,33 @@ mod tests {
     use super::super::encoding::*;
 
     #[test]
-    fn test_quality_item_show1() {
+    fn test_quality_item_fmt_q_1() {
         let x = qitem(Chunked);
         assert_eq!(format!("{}", x), "chunked");
     }
     #[test]
-    fn test_quality_item_show2() {
+    fn test_quality_item_fmt_q_0001() {
         let x = QualityItem::new(Chunked, Quality(1));
         assert_eq!(format!("{}", x), "chunked; q=0.001");
     }
     #[test]
-    fn test_quality_item_show3() {
+    fn test_quality_item_fmt_q_05() {
         // Custom value
         let x = QualityItem{
             item: EncodingExt("identity".to_owned()),
             quality: Quality(500),
         };
         assert_eq!(format!("{}", x), "identity; q=0.5");
+    }
+
+    #[test]
+    fn test_quality_item_fmt_q_0() {
+        // Custom value
+        let x = QualityItem{
+            item: EncodingExt("identity".to_owned()),
+            quality: Quality(0),
+        };
+        assert_eq!(x.to_string(), "identity; q=0");
     }
 
     #[test]
@@ -195,11 +246,6 @@ mod tests {
     }
 
     #[test]
-    fn test_quality2() {
-        assert_eq!(format!("{}", q(0.0)), "; q=0");
-    }
-
-    #[test]
     #[should_panic] // FIXME - 32-bit msvc unwinding broken
     #[cfg_attr(all(target_arch="x86", target_env="msvc"), ignore)]
     fn test_quality_invalid() {
@@ -211,5 +257,11 @@ mod tests {
     #[cfg_attr(all(target_arch="x86", target_env="msvc"), ignore)]
     fn test_quality_invalid2() {
         q(2.0);
+    }
+
+    #[test]
+    fn test_fuzzing_bugs() {
+        assert!("99999;".parse::<QualityItem<String>>().is_err());
+        assert!("\x0d;;;=\u{d6aa}==".parse::<QualityItem<String>>().is_err())
     }
 }

@@ -8,16 +8,26 @@ header! {
     /// corresponding to the sequence of transfer codings that have been (or
     /// will be) applied to the payload body in order to form the message
     /// body.
+    ///
+    /// Note that setting this header will *remove* any previously set
+    /// `Content-Length` header, in accordance with
+    /// [RFC7230](http://tools.ietf.org/html/rfc7230#section-3.3.2):
+    ///
+    /// > A sender MUST NOT send a Content-Length header field in any message
+    /// > that contains a Transfer-Encoding header field.
     /// 
     /// # ABNF
-    /// ```plain
+    ///
+    /// ```text
     /// Transfer-Encoding = 1#transfer-coding
     /// ```
     /// 
     /// # Example values
+    ///
     /// * `gzip, chunked`
     /// 
     /// # Example
+    ///
     /// ```
     /// use hyper::header::{Headers, TransferEncoding, Encoding};
     /// 
@@ -46,6 +56,13 @@ header! {
                 vec![Encoding::Chunked, Encoding::Chunked]
             )));
 
+    }
+}
+
+impl TransferEncoding {
+    /// Constructor for the most common Transfer-Encoding, `chunked`.
+    pub fn chunked() -> TransferEncoding {
+        TransferEncoding(vec![Encoding::Chunked])
     }
 }
 

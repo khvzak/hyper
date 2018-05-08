@@ -12,10 +12,12 @@ use std::str::from_utf8;
 /// attach more than one Cookie header field.
 ///
 /// # Example values
+///
 /// * `SID=31d4d96e407aad42`
 /// * `SID=31d4d96e407aad42; lang=en-US`
 ///
 /// # Example
+///
 /// ```
 /// use hyper::header::{Headers, Cookie};
 ///

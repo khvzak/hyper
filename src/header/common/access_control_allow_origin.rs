@@ -1,4 +1,5 @@
 use std::fmt::{self, Display};
+use std::str;
 
 use header::{Header, HeaderFormat};
 
@@ -7,10 +8,11 @@ use header::{Header, HeaderFormat};
 ///
 /// The `Access-Control-Allow-Origin` header indicates whether a resource
 /// can be shared based by returning the value of the Origin request header,
-/// "*", or "null" in the response.
+/// `*`, or `null` in the response.
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Access-Control-Allow-Origin = "Access-Control-Allow-Origin" ":" origin-list-or-null | "*"
 /// ```
 ///
@@ -65,9 +67,9 @@ impl Header for AccessControlAllowOrigin {
         }
         let value = unsafe { raw.get_unchecked(0) };
         Ok(match &value[..] {
-            b"*" => AccessControlAllowOrigin::Any,
-            b"null" => AccessControlAllowOrigin::Null,
-            _ => AccessControlAllowOrigin::Value(try!(String::from_utf8(value.clone())))
+                b"*" => AccessControlAllowOrigin::Any,
+                b"null" => AccessControlAllowOrigin::Null,
+                _ => AccessControlAllowOrigin::Value(try!(str::from_utf8(value)).into())
         })
     }
 }
@@ -89,7 +91,7 @@ impl Display for AccessControlAllowOrigin {
 }
 
 #[cfg(test)]
-mod test_access_control_allow_orgin {
+mod test_access_control_allow_origin {
     use header::*;
     use super::AccessControlAllowOrigin as HeaderField;
     test_header!(test1, vec![b"null"]);

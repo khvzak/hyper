@@ -4,7 +4,7 @@ use header::{HeaderFormat, Header, parsing};
 
 /// `Content-Length` header, defined in
 /// [RFC7230](http://tools.ietf.org/html/rfc7230#section-3.3.2)
-/// 
+///
 /// When a message does not have a `Transfer-Encoding` header field, a
 /// Content-Length header field can provide the anticipated size, as a
 /// decimal number of octets, for a potential payload body.  For messages
@@ -13,19 +13,29 @@ use header::{HeaderFormat, Header, parsing};
 /// body (and message) ends.  For messages that do not include a payload
 /// body, the Content-Length indicates the size of the selected
 /// representation.
-/// 
+///
+/// Note that setting this header will *remove* any previously set
+/// `Transfer-Encoding` header, in accordance with
+/// [RFC7230](http://tools.ietf.org/html/rfc7230#section-3.3.2):
+///
+/// > A sender MUST NOT send a Content-Length header field in any message
+/// > that contains a Transfer-Encoding header field.
+///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Content-Length = 1*DIGIT
 /// ```
-/// 
+///
 /// # Example values
+///
 /// * `3495`
-/// 
+///
 /// # Example
+///
 /// ```
 /// use hyper::header::{Headers, ContentLength};
-/// 
+///
 /// let mut headers = Headers::new();
 /// headers.set(ContentLength(1024u64));
 /// ```
@@ -47,9 +57,9 @@ impl Header for ContentLength {
             .fold(None, |prev, x| {
                 match (prev, x) {
                     (None, x) => Some(x),
-                    (e@Some(Err(_)), _ ) => e,
+                    (e @ Some(Err(_)), _ ) => e,
                     (Some(Ok(prev)), Ok(x)) if prev == x => Some(Ok(prev)),
-                    _ => Some(Err(::Error::Header))
+                    _ => Some(Err(::Error::Header)),
                 }
             })
             .unwrap_or(Err(::Error::Header))

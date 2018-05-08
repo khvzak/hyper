@@ -1,6 +1,6 @@
 use std::fmt::{self, Display};
 use std::str;
-use unicase::UniCase;
+use unicase;
 use header::{Header, HeaderFormat};
 
 /// `Access-Control-Allow-Credentials` header, part of
@@ -13,7 +13,8 @@ use header::{Header, HeaderFormat};
 /// > match the following ABNF:
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Access-Control-Allow-Credentials: "Access-Control-Allow-Credentials" ":" "true"
 /// ```
 ///
@@ -25,6 +26,7 @@ use header::{Header, HeaderFormat};
 /// * "true"
 ///
 /// # Examples
+///
 /// ```
 /// # extern crate hyper;
 /// # fn main() {
@@ -38,7 +40,7 @@ use header::{Header, HeaderFormat};
 #[derive(Clone, PartialEq, Debug)]
 pub struct AccessControlAllowCredentials;
 
-const ACCESS_CONTROL_ALLOW_CREDENTIALS_TRUE: UniCase<&'static str> = UniCase("true");
+const ACCESS_CONTROL_ALLOW_CREDENTIALS_TRUE: &'static str = "true";
 
 impl Header for AccessControlAllowCredentials {
     fn header_name() -> &'static str {
@@ -56,7 +58,7 @@ impl Header for AccessControlAllowCredentials {
                 //    None. No big deal.
                 str::from_utf8_unchecked(raw.get_unchecked(0))
             };
-            if UniCase(text) == ACCESS_CONTROL_ALLOW_CREDENTIALS_TRUE {
+            if unicase::eq_ascii(text, ACCESS_CONTROL_ALLOW_CREDENTIALS_TRUE) {
                 return Ok(AccessControlAllowCredentials);
             }
         }

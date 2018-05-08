@@ -17,33 +17,32 @@ use header::{self, Header, HeaderFormat, EntityTag, HttpDate};
 /// in Range; otherwise, send me the entire representation.
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// If-Range = entity-tag / HTTP-date
 /// ```
 ///
 /// # Example values
+///
 /// * `Sat, 29 Oct 1994 19:43:31 GMT`
 /// * `\"xyzzy\"`
 ///
 /// # Examples
+///
 /// ```
 /// use hyper::header::{Headers, IfRange, EntityTag};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(IfRange::EntityTag(EntityTag::new(false, "xyzzy".to_owned())));
 /// ```
-/// ```
-/// # extern crate hyper;
-/// # extern crate time;
-/// # fn main() {
-/// // extern crate time;
 ///
-/// use hyper::header::{Headers, IfRange, HttpDate};
-/// use time::{self, Duration};
+/// ```
+/// use hyper::header::{Headers, IfRange};
+/// use std::time::{SystemTime, Duration};
 ///
 /// let mut headers = Headers::new();
-/// headers.set(IfRange::Date(HttpDate(time::now() - Duration::days(1))));
-/// # }
+/// let fetched = SystemTime::now() - Duration::from_secs(60 * 60 * 24);
+/// headers.set(IfRange::Date(fetched.into()));
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub enum IfRange {
@@ -57,14 +56,15 @@ impl Header for IfRange {
     fn header_name() -> &'static str {
         "If-Range"
     }
+
     fn parse_header(raw: &[Vec<u8>]) -> ::Result<IfRange> {
         let etag: ::Result<EntityTag> = header::parsing::from_one_raw_str(raw);
-        if etag.is_ok() {
-            return Ok(IfRange::EntityTag(etag.unwrap()));
+        if let Ok(etag) = etag {
+            return Ok(IfRange::EntityTag(etag));
         }
         let date: ::Result<HttpDate> = header::parsing::from_one_raw_str(raw);
-        if date.is_ok() {
-            return Ok(IfRange::Date(date.unwrap()));
+        if let Ok(date) = date {
+            return Ok(IfRange::Date(date));
         }
         Err(::Error::Header)
     }

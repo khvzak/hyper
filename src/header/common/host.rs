@@ -1,8 +1,8 @@
-use header::{Header, HeaderFormat};
 use std::fmt;
 use std::str::FromStr;
+
+use header::{Header, HeaderFormat};
 use header::parsing::from_one_raw_str;
-use url::idna::domain_to_unicode;
 
 /// The `Host` header.
 ///
@@ -13,6 +13,7 @@ use url::idna::domain_to_unicode;
 /// like `url::Host` or something.
 ///
 /// # Examples
+///
 /// ```
 /// use hyper::header::{Headers, Host};
 ///
@@ -76,27 +77,14 @@ impl FromStr for Host {
         let port = idx.and_then(
             |idx| s[idx + 1..].parse().ok()
         );
-        let hostname_encoded = match port {
+        let hostname = match port {
             None => s,
             Some(_) => &s[..idx.unwrap()]
         };
 
-        let hostname = if hostname_encoded.starts_with("[") {
-            if !hostname_encoded.ends_with("]") {
-                return Err(::Error::Header)
-            }
-            hostname_encoded.to_owned()
-        } else {
-            let (hostname, res) = domain_to_unicode(hostname_encoded);
-            if res.is_err() {
-                return Err(::Error::Header)
-            }
-            hostname
-        };
-
         Ok(Host {
-            hostname: hostname,
-            port: port
+            hostname: hostname.to_owned(),
+            port: port,
         })
     }
 }

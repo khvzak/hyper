@@ -5,12 +5,12 @@ use header::parsing::{from_comma_delimited, fmt_comma_delimited};
 
 /// `Prefer` header, defined in [RFC7240](http://tools.ietf.org/html/rfc7240)
 ///
-/// The `Prefer` header field is HTTP header field that can be used by a
-/// client to request that certain behaviors be employed by a server
-/// while processing a request.
+/// The `Prefer` header field can be used by a client to request that certain
+/// behaviors be employed by a server while processing a request.
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Prefer     = "Prefer" ":" 1#preference
 /// preference = token [ BWS "=" BWS word ]
 ///              *( OWS ";" [ OWS parameter ] )
@@ -23,6 +23,7 @@ use header::parsing::{from_comma_delimited, fmt_comma_delimited};
 /// * `wait=30`
 ///
 /// # Examples
+///
 /// ```
 /// use hyper::header::{Headers, Prefer, Preference};
 ///
@@ -31,6 +32,7 @@ use header::parsing::{from_comma_delimited, fmt_comma_delimited};
 ///     Prefer(vec![Preference::RespondAsync])
 /// );
 /// ```
+///
 /// ```
 /// use hyper::header::{Headers, Prefer, Preference};
 ///
@@ -89,8 +91,8 @@ pub enum Preference {
     ReturnMinimal,
     /// "handling=strict"
     HandlingStrict,
-    /// "handling=leniant"
-    HandlingLeniant,
+    /// "handling=lenient"
+    HandlingLenient,
     /// "wait=delta"
     Wait(u32),
 
@@ -107,14 +109,14 @@ impl fmt::Display for Preference {
             ReturnRepresentation => "return=representation",
             ReturnMinimal => "return=minimal",
             HandlingStrict => "handling=strict",
-            HandlingLeniant => "handling=leniant",
+            HandlingLenient => "handling=lenient",
 
             Wait(secs) => return write!(f, "wait={}", secs),
 
             Extension(ref name, ref value, ref params) => {
                 try!(write!(f, "{}", name));
                 if value != "" { try!(write!(f, "={}", value)); }
-                if params.len() > 0 {
+                if !params.is_empty() {
                     for &(ref name, ref value) in params {
                         try!(write!(f, "; {}", name));
                         if value != "" { try!(write!(f, "={}", value)); }
@@ -146,12 +148,12 @@ impl FromStr for Preference {
             Some(param) => {
                 let rest: Vec<(String, String)> = params.map(|(l, r)| (l.to_owned(), r.to_owned())).collect();
                 match param {
-                    ("respond-async", "") => if rest.len() == 0 { Ok(RespondAsync) } else { Err(None) },
-                    ("return", "representation") => if rest.len() == 0 { Ok(ReturnRepresentation) } else { Err(None) },
-                    ("return", "minimal") => if rest.len() == 0 { Ok(ReturnMinimal) } else { Err(None) },
-                    ("handling", "strict") => if rest.len() == 0 { Ok(HandlingStrict) } else { Err(None) },
-                    ("handling", "leniant") => if rest.len() == 0 { Ok(HandlingLeniant) } else { Err(None) },
-                    ("wait", secs) => if rest.len() == 0 { secs.parse().map(Wait).map_err(Some) } else { Err(None) },
+                    ("respond-async", "") => if rest.is_empty() { Ok(RespondAsync) } else { Err(None) },
+                    ("return", "representation") => if rest.is_empty() { Ok(ReturnRepresentation) } else { Err(None) },
+                    ("return", "minimal") => if rest.is_empty() { Ok(ReturnMinimal) } else { Err(None) },
+                    ("handling", "strict") => if rest.is_empty() { Ok(HandlingStrict) } else { Err(None) },
+                    ("handling", "lenient") => if rest.is_empty() { Ok(HandlingLenient) } else { Err(None) },
+                    ("wait", secs) => if rest.is_empty() { secs.parse().map(Wait).map_err(Some) } else { Err(None) },
                     (left, right) => Ok(Extension(left.to_owned(), right.to_owned(), rest))
                 }
             },
@@ -174,9 +176,9 @@ mod tests {
 
     #[test]
     fn test_parse_argument() {
-        let prefer = Header::parse_header(&[b"wait=100, handling=leniant, respond-async".to_vec()]);
+        let prefer = Header::parse_header(&[b"wait=100, handling=lenient, respond-async".to_vec()]);
         assert_eq!(prefer.ok(), Some(Prefer(vec![Preference::Wait(100),
-                                           Preference::HandlingLeniant,
+                                           Preference::HandlingLenient,
                                            Preference::RespondAsync])))
     }
 

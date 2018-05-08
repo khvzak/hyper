@@ -1,4 +1,4 @@
-use unicase::UniCase;
+use unicase::Ascii;
 
 header! {
     /// `Access-Control-Request-Headers` header, part of
@@ -9,7 +9,8 @@ header! {
     /// during the actual request.
     ///
     /// # ABNF
-    /// ```plain
+    ///
+    /// ```text
     /// Access-Control-Allow-Headers: "Access-Control-Allow-Headers" ":" #field-name
     /// ```
     ///
@@ -17,6 +18,7 @@ header! {
     /// * `accept-language, date`
     ///
     /// # Examples
+    ///
     /// ```
     /// # extern crate hyper;
     /// # extern crate unicase;
@@ -24,14 +26,15 @@ header! {
     /// // extern crate unicase;
     ///
     /// use hyper::header::{Headers, AccessControlRequestHeaders};
-    /// use unicase::UniCase;
+    /// use unicase::Ascii;
     ///
     /// let mut headers = Headers::new();
     /// headers.set(
-    ///     AccessControlRequestHeaders(vec![UniCase("date".to_owned())])
+    ///     AccessControlRequestHeaders(vec![Ascii::new("date".to_owned())])
     /// );
     /// # }
     /// ```
+    ///
     /// ```
     /// # extern crate hyper;
     /// # extern crate unicase;
@@ -39,18 +42,18 @@ header! {
     /// // extern crate unicase;
     ///
     /// use hyper::header::{Headers, AccessControlRequestHeaders};
-    /// use unicase::UniCase;
+    /// use unicase::Ascii;
     ///
     /// let mut headers = Headers::new();
     /// headers.set(
     ///     AccessControlRequestHeaders(vec![
-    ///         UniCase("accept-language".to_owned()),
-    ///         UniCase("date".to_owned()),
+    ///         Ascii::new("accept-language".to_owned()),
+    ///         Ascii::new("date".to_owned()),
     ///     ])
     /// );
     /// # }
     /// ```
-    (AccessControlRequestHeaders, "Access-Control-Request-Headers") => (UniCase<String>)*
+    (AccessControlRequestHeaders, "Access-Control-Request-Headers") => (Ascii<String>)*
 
     test_access_control_request_headers {
         test_header!(test1, vec![b"accept-language, date"]);

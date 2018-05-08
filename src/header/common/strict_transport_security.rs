@@ -1,7 +1,7 @@
 use std::fmt;
 use std::str::{self, FromStr};
 
-use unicase::UniCase;
+use unicase;
 
 use header::{Header, HeaderFormat, parsing};
 
@@ -17,7 +17,7 @@ use header::{Header, HeaderFormat, parsing};
 ///
 /// # ABNF
 ///
-/// ```plain
+/// ```text
 ///      [ directive ]  *( ";" [ directive ] )
 ///
 ///      directive                 = directive-name [ "=" directive-value ]
@@ -27,10 +27,12 @@ use header::{Header, HeaderFormat, parsing};
 /// ```
 ///
 /// # Example values
+///
 /// * `max-age=31536000`
 /// * `max-age=15768000 ; includeSubDomains`
 ///
 /// # Example
+///
 /// ```
 /// # extern crate hyper;
 /// # fn main() {
@@ -85,13 +87,13 @@ impl FromStr for StrictTransportSecurity {
     fn from_str(s: &str) -> ::Result<StrictTransportSecurity> {
         s.split(';')
             .map(str::trim)
-            .map(|sub| if UniCase(sub) == UniCase("includeSubdomains") {
+            .map(|sub| if unicase::eq_ascii(sub, "includeSubdomains") {
                 Ok(Directive::IncludeSubdomains)
             } else {
                 let mut sub = sub.splitn(2, '=');
                 match (sub.next(), sub.next()) {
                     (Some(left), Some(right))
-                    if UniCase(left.trim()) == UniCase("max-age") => {
+                    if unicase::eq_ascii(left.trim(), "max-age") => {
                         right
                             .trim()
                             .trim_matches('"')
@@ -104,8 +106,8 @@ impl FromStr for StrictTransportSecurity {
             .fold(Ok((None, None)), |res, dir| match (res, dir) {
                 (Ok((None, sub)), Ok(Directive::MaxAge(age))) => Ok((Some(age), sub)),
                 (Ok((age, None)), Ok(Directive::IncludeSubdomains)) => Ok((age, Some(()))),
-                (Ok((Some(_), _)), Ok(Directive::MaxAge(_))) => Err(::Error::Header),
-                (Ok((_, Some(_))), Ok(Directive::IncludeSubdomains)) => Err(::Error::Header),
+                (Ok((Some(_), _)), Ok(Directive::MaxAge(_))) |
+                (Ok((_, Some(_))), Ok(Directive::IncludeSubdomains)) |
                 (_, Err(_)) => Err(::Error::Header),
                 (res, _) => res
             })

@@ -1,6 +1,5 @@
 use std::fmt;
-
-#[allow(unused_imports)]
+#[allow(unused, deprecated)]
 use std::ascii::AsciiExt;
 
 use header::{Header, HeaderFormat, parsing};
@@ -15,7 +14,8 @@ use header::{Header, HeaderFormat, parsing};
 /// protected resource.
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Referrer-Policy: 1#policy-token
 /// policy-token   = "no-referrer" / "no-referrer-when-downgrade"
 ///                  / "same-origin" / "origin"
@@ -23,9 +23,11 @@ use header::{Header, HeaderFormat, parsing};
 /// ```
 ///
 /// # Example values
+///
 /// * `no-referrer`
 ///
 /// # Example
+///
 /// ```
 /// use hyper::header::{Headers, ReferrerPolicy};
 ///

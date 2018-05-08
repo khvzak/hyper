@@ -1,7 +1,7 @@
 use std::fmt;
 use std::str;
 
-use unicase::UniCase;
+use unicase;
 
 use header::{Header, HeaderFormat};
 
@@ -26,8 +26,6 @@ pub enum Expect {
     Continue
 }
 
-const EXPECT_CONTINUE: UniCase<&'static str> = UniCase("100-continue");
-
 impl Header for Expect {
     fn header_name() -> &'static str {
         "Expect"
@@ -44,7 +42,7 @@ impl Header for Expect {
                 //    None. No big deal.
                 str::from_utf8_unchecked(raw.get_unchecked(0))
             };
-            if UniCase(text) == EXPECT_CONTINUE {
+            if unicase::eq_ascii(text, "100-continue") {
                 Ok(Expect::Continue)
             } else {
                 Err(::Error::Header)

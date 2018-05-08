@@ -1,6 +1,5 @@
 use std::fmt;
-
-#[allow(unused_imports)]
+#[allow(unused, deprecated)]
 use std::ascii::AsciiExt;
 
 use header::{Header, HeaderFormat, parsing};
@@ -12,20 +11,23 @@ use header::{Header, HeaderFormat, parsing};
 /// > that they will understand (as Cache-Control was not defined until
 /// > HTTP/1.1).  When the Cache-Control header field is also present and
 /// > understood in a request, Pragma is ignored.
-
 /// > In HTTP/1.0, Pragma was defined as an extensible field for
 /// > implementation-specified directives for recipients.  This
 /// > specification deprecates such extensions to improve interoperability.
 ///
-/// Spec: https://tools.ietf.org/html/rfc7234#section-5.4
+/// Spec: [https://tools.ietf.org/html/rfc7234#section-5.4][url]
+///
+/// [url]: https://tools.ietf.org/html/rfc7234#section-5.4
 ///
 /// # Examples
+///
 /// ```
 /// use hyper::header::{Headers, Pragma};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(Pragma::NoCache);
 /// ```
+///
 /// ```
 /// use hyper::header::{Headers, Pragma};
 ///

@@ -1,6 +1,7 @@
-use header::{Header, Host, HeaderFormat};
 use std::fmt;
 use std::str::FromStr;
+
+use header::{Header, Host, HeaderFormat};
 use header::parsing::from_one_raw_str;
 
 /// The `Origin` header.
@@ -13,6 +14,7 @@ use header::parsing::from_one_raw_str;
 /// a String (scheme), header::Host (host/port)
 ///
 /// # Examples
+///
 /// ```
 /// use hyper::header::{Headers, Origin};
 ///

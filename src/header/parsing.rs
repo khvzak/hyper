@@ -17,7 +17,7 @@ pub fn from_one_raw_str<T: str::FromStr>(raw: &[Vec<u8>]) -> ::Result<T> {
 
 /// Reads a raw string into a value.
 pub fn from_raw_str<T: str::FromStr>(raw: &[u8]) -> ::Result<T> {
-    let s = try!(str::from_utf8(raw));
+    let s = try!(str::from_utf8(raw)).trim();
     T::from_str(s).or(Err(::Error::Header))
 }
 
@@ -32,17 +32,19 @@ pub fn from_comma_delimited<T: str::FromStr, S: AsRef<[u8]>>(raw: &[S]) -> ::Res
                           "" => None,
                           y => Some(y)
                       })
-                      .filter_map(|x| x.parse().ok()))
+                      .filter_map(|x| x.trim().parse().ok()))
     }
     Ok(result)
 }
 
 /// Format an array into a comma-delimited string.
 pub fn fmt_comma_delimited<T: Display>(f: &mut fmt::Formatter, parts: &[T]) -> fmt::Result {
-    for (i, part) in parts.iter().enumerate() {
-        if i != 0 {
-            try!(f.write_str(", "));
-        }
+    let mut iter = parts.iter();
+    if let Some(part) = iter.next() {
+        try!(Display::fmt(part, f));
+    }
+    for part in iter {
+        try!(f.write_str(", "));
         try!(Display::fmt(part, f));
     }
     Ok(())
@@ -66,7 +68,8 @@ pub struct ExtendedValue {
 /// Extended values are denoted by parameter names that end with `*`.
 ///
 /// ## ABNF
-/// ```plain
+///
+/// ```text
 /// ext-value     = charset  "'" [ language ] "'" value-chars
 ///               ; like RFC 2231's <extended-initial-value>
 ///               ; (see [RFC2231], Section 7)
@@ -128,19 +131,11 @@ pub fn parse_extended_value(val: &str) -> ::Result<ExtendedValue> {
     })
 }
 
-define_encode_set! {
-    /// This encode set is used for HTTP header values and is defined at
-    /// https://tools.ietf.org/html/rfc5987#section-3.2
-    pub HTTP_VALUE = [percent_encoding::SIMPLE_ENCODE_SET] | {
-        ' ', '"', '%', '\'', '(', ')', '*', ',', '/', ':', ';', '<', '-', '>', '?',
-        '[', '\\', ']', '{', '}'
-    }
-}
 
 impl Display for ExtendedValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let encoded_value =
-            percent_encoding::percent_encode(&self.value[..], HTTP_VALUE);
+            percent_encoding::percent_encode(&self.value[..], self::percent_encoding_http::HTTP_VALUE);
         if let Some(ref lang) = self.language_tag {
             write!(f, "{}'{}'{}", self.charset, lang, encoded_value)
         } else {
@@ -149,14 +144,39 @@ impl Display for ExtendedValue {
     }
 }
 
+/// Percent encode a sequence of bytes with a character set defined in
+/// [https://tools.ietf.org/html/rfc5987#section-3.2][url]
+///
+/// [url]: https://tools.ietf.org/html/rfc5987#section-3.2
+pub fn http_percent_encode(f: &mut fmt::Formatter, bytes: &[u8]) -> fmt::Result {
+    let encoded = percent_encoding::percent_encode(bytes, self::percent_encoding_http::HTTP_VALUE);
+    fmt::Display::fmt(&encoded, f)
+}
+
+mod percent_encoding_http {
+    use url::percent_encoding;
+
+    // internal module because macro is hard-coded to make a public item
+    // but we don't want to public export this item
+    define_encode_set! {
+        // This encode set is used for HTTP header values and is defined at
+        // https://tools.ietf.org/html/rfc5987#section-3.2
+        pub HTTP_VALUE = [percent_encoding::SIMPLE_ENCODE_SET] | {
+            ' ', '"', '%', '\'', '(', ')', '*', ',', '/', ':', ';', '<', '-', '>', '?',
+            '[', '\\', ']', '{', '}'
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use header::shared::Charset;
     use super::{ExtendedValue, parse_extended_value};
+    use language_tags::LanguageTag;
 
     #[test]
     fn test_parse_extended_value_with_encoding_and_language_tag() {
-        let expected_language_tag = langtag!(en);
+        let expected_language_tag = "en".parse::<LanguageTag>().unwrap();
         // RFC 5987, Section 3.2.2
         // Extended notation, using the Unicode character U+00A3 (POUND SIGN)
         let result = parse_extended_value("iso-8859-1'en'%A3%20rates");

@@ -70,7 +70,8 @@ header! {
 /// Content-Range, described in [RFC7233](https://tools.ietf.org/html/rfc7233#section-4.2)
 ///
 /// # ABNF
-/// ```plain
+///
+/// ```text
 /// Content-Range       = byte-content-range
 ///                     / other-content-range
 ///
@@ -182,7 +183,7 @@ impl Display for ContentRangeSpec {
             ContentRangeSpec::Unregistered { ref unit, ref resp } => {
                 try!(f.write_str(&unit));
                 try!(f.write_str(" "));
-                f.write_str(&resp)
+                f.write_str(resp)
             }
         }
     }
