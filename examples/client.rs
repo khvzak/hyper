@@ -10,7 +10,7 @@ use hyper::Client;
 use hyper::header::Connection;
 
 fn main() {
-    env_logger::init().unwrap();
+    env_logger::init();
 
     let url = match env::args().nth(1) {
         Some(url) => url,
