@@ -217,7 +217,7 @@ mod tests {
         // The headers are correct?
         match req.headers.get::<Host>() {
             Some(host) => {
-                assert_eq!("example.domain", host.hostname);
+                assert_eq!("example.domain", host.hostname());
             },
             None => panic!("Host header expected!"),
         };

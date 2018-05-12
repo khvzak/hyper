@@ -27,9 +27,10 @@ pub use self::content_disposition::{ContentDisposition, DispositionType, Disposi
 pub use self::content_encoding::ContentEncoding;
 pub use self::content_language::ContentLanguage;
 pub use self::content_length::ContentLength;
+pub use self::content_location::ContentLocation;
 pub use self::content_range::{ContentRange, ContentRangeSpec};
 pub use self::content_type::ContentType;
-pub use self::cookie::Cookie;
+pub use self::cookie::{Cookie, CookieIter};
 pub use self::date::Date;
 pub use self::etag::ETag;
 pub use self::expect::Expect;
@@ -41,6 +42,7 @@ pub use self::if_modified_since::IfModifiedSince;
 pub use self::if_none_match::IfNoneMatch;
 pub use self::if_range::IfRange;
 pub use self::if_unmodified_since::IfUnmodifiedSince;
+pub use self::last_event_id::LastEventId;
 pub use self::last_modified::LastModified;
 pub use self::link::{Link, LinkValue, RelationType, MediaDesc};
 pub use self::location::Location;
@@ -48,16 +50,20 @@ pub use self::origin::Origin;
 pub use self::pragma::Pragma;
 pub use self::prefer::{Prefer, Preference};
 pub use self::preference_applied::PreferenceApplied;
+pub use self::proxy_authorization::ProxyAuthorization;
 pub use self::range::{Range, ByteRangeSpec};
 pub use self::referer::Referer;
 pub use self::referrer_policy::ReferrerPolicy;
+pub use self::retry_after::RetryAfter;
 pub use self::server::Server;
 pub use self::set_cookie::SetCookie;
 pub use self::strict_transport_security::StrictTransportSecurity;
+pub use self::te::Te;
 pub use self::transfer_encoding::TransferEncoding;
 pub use self::upgrade::{Upgrade, Protocol, ProtocolName};
 pub use self::user_agent::UserAgent;
 pub use self::vary::Vary;
+pub use self::warning::Warning;
 
 #[doc(hidden)]
 #[macro_export]
@@ -69,22 +75,22 @@ macro_rules! bench_header(
             use test::Bencher;
             use super::*;
 
-            use header::{Header, HeaderFormatter};
+            use header::Header;
 
             #[bench]
             fn bench_parse(b: &mut Bencher) {
-                let val = $value;
+                let val = $value.into();
                 b.iter(|| {
-                    let _: $ty = Header::parse_header(&val[..]).unwrap();
+                    let _: $ty = Header::parse_header(&val).unwrap();
                 });
             }
 
             #[bench]
             fn bench_format(b: &mut Bencher) {
-                let val: $ty = Header::parse_header(&$value[..]).unwrap();
-                let fmt = HeaderFormatter(&val);
+                let raw = $value.into();
+                let val: $ty = Header::parse_header(&raw).unwrap();
                 b.iter(|| {
-                    format!("{}", fmt);
+                    format!("{}", val);
                 });
             }
         }
@@ -141,7 +147,8 @@ macro_rules! test_header {
             use std::ascii::AsciiExt;
             let raw = $raw;
             let a: Vec<Vec<u8>> = raw.iter().map(|x| x.to_vec()).collect();
-            let value = HeaderField::parse_header(&a[..]);
+            let a = a.into();
+            let value = HeaderField::parse_header(&a);
             let result = format!("{}", value.unwrap());
             let expected = String::from_utf8(raw[0].to_vec()).unwrap();
             let result_cmp: Vec<String> = result
@@ -161,7 +168,8 @@ macro_rules! test_header {
         #[test]
         fn $id() {
             let a: Vec<Vec<u8>> = $raw.iter().map(|x| x.to_vec()).collect();
-            let val = HeaderField::parse_header(&a[..]);
+            let a = a.into();
+            let val = HeaderField::parse_header(&a);
             let typed: Option<HeaderField> = $typed;
             // Test parsing
             assert_eq!(val.ok(), typed);
@@ -196,24 +204,22 @@ macro_rules! header {
         __hyper__deref!($id => Vec<$item>);
         impl $crate::header::Header for $id {
             fn header_name() -> &'static str {
-                $n
+                static NAME: &'static str = $n;
+                NAME
             }
             #[inline]
-            fn parse_header(raw: &[Vec<u8>]) -> $crate::Result<Self> {
+            fn parse_header(raw: &$crate::header::Raw) -> $crate::Result<Self> {
                 $crate::header::parsing::from_comma_delimited(raw).map($id)
             }
-        }
-        impl $crate::header::HeaderFormat for $id {
             #[inline]
-            fn fmt_header(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                $crate::header::parsing::fmt_comma_delimited(f, &self.0[..])
+            fn fmt_header(&self, f: &mut $crate::header::Formatter) -> ::std::fmt::Result {
+                f.fmt_line(self)
             }
         }
         impl ::std::fmt::Display for $id {
             #[inline]
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                use $crate::header::HeaderFormat;
-                self.fmt_header(f)
+                $crate::header::parsing::fmt_comma_delimited(f, &self.0[..])
             }
         }
     };
@@ -226,24 +232,22 @@ macro_rules! header {
         impl $crate::header::Header for $id {
             #[inline]
             fn header_name() -> &'static str {
-                $n
+                static NAME: &'static str = $n;
+                NAME
             }
             #[inline]
-            fn parse_header(raw: &[Vec<u8>]) -> $crate::Result<Self> {
+            fn parse_header(raw: &$crate::header::Raw) -> $crate::Result<Self> {
                 $crate::header::parsing::from_comma_delimited(raw).map($id)
             }
-        }
-        impl $crate::header::HeaderFormat for $id {
             #[inline]
-            fn fmt_header(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                $crate::header::parsing::fmt_comma_delimited(f, &self.0[..])
+            fn fmt_header(&self, f: &mut $crate::header::Formatter) -> ::std::fmt::Result {
+                f.fmt_line(self)
             }
         }
         impl ::std::fmt::Display for $id {
             #[inline]
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                use $crate::header::HeaderFormat;
-                self.fmt_header(f)
+                $crate::header::parsing::fmt_comma_delimited(f, &self.0[..])
             }
         }
     };
@@ -256,23 +260,90 @@ macro_rules! header {
         impl $crate::header::Header for $id {
             #[inline]
             fn header_name() -> &'static str {
-                $n
+                static NAME: &'static str = $n;
+                NAME
             }
             #[inline]
-            fn parse_header(raw: &[Vec<u8>]) -> $crate::Result<Self> {
+            fn parse_header(raw: &$crate::header::Raw) -> $crate::Result<Self> {
                 $crate::header::parsing::from_one_raw_str(raw).map($id)
             }
-        }
-        impl $crate::header::HeaderFormat for $id {
             #[inline]
-            fn fmt_header(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                ::std::fmt::Display::fmt(&**self, f)
+            fn fmt_header(&self, f: &mut $crate::header::Formatter) -> ::std::fmt::Result {
+                f.fmt_line(self)
             }
         }
         impl ::std::fmt::Display for $id {
             #[inline]
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                ::std::fmt::Display::fmt(&**self, f)
+                ::std::fmt::Display::fmt(&self.0, f)
+            }
+        }
+    };
+    // Single value header (internal)
+    ($(#[$a:meta])*($id:ident, $n:expr) => danger [$value:ty]) => {
+        $(#[$a])*
+        #[derive(Clone, Debug, PartialEq)]
+        pub struct $id(pub $value);
+        __hyper__deref!($id => $value);
+        impl $crate::header::Header for $id {
+            #[inline]
+            fn header_name() -> &'static str {
+                static NAME: &'static str = $n;
+                NAME
+            }
+            #[inline]
+            fn parse_header(raw: &$crate::header::Raw) -> $crate::Result<Self> {
+                $crate::header::parsing::from_one_raw_str(raw).map($id)
+            }
+            #[inline]
+            fn fmt_header(&self, f: &mut $crate::header::Formatter) -> ::std::fmt::Result {
+                f.danger_fmt_line_without_newline_replacer(self)
+            }
+        }
+        impl ::std::fmt::Display for $id {
+            #[inline]
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                ::std::fmt::Display::fmt(&self.0, f)
+            }
+        }
+    };
+    // Single value cow header
+    ($(#[$a:meta])*($id:ident, $n:expr) => Cow[$value:ty]) => {
+        $(#[$a])*
+        #[derive(Clone, Debug, PartialEq)]
+        pub struct $id(::std::borrow::Cow<'static,$value>);
+        impl $id {
+            /// Creates a new $id
+            pub fn new<I: Into<::std::borrow::Cow<'static,$value>>>(value: I) -> Self {
+                $id(value.into())
+            }
+        }
+        impl ::std::ops::Deref for $id {
+            type Target = $value;
+            #[inline]
+            fn deref(&self) -> &Self::Target {
+                &(self.0)
+            }
+        }
+        impl $crate::header::Header for $id {
+            #[inline]
+            fn header_name() -> &'static str {
+                static NAME: &'static str = $n;
+                NAME
+            }
+            #[inline]
+            fn parse_header(raw: &$crate::header::Raw) -> $crate::Result<Self> {
+                $crate::header::parsing::from_one_raw_str::<<$value as ::std::borrow::ToOwned>::Owned>(raw).map($id::new)
+            }
+            #[inline]
+            fn fmt_header(&self, f: &mut $crate::header::Formatter) -> ::std::fmt::Result {
+                f.fmt_line(self)
+            }
+        }
+        impl ::std::fmt::Display for $id {
+            #[inline]
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                ::std::fmt::Display::fmt(&self.0, f)
             }
         }
     };
@@ -289,34 +360,32 @@ macro_rules! header {
         impl $crate::header::Header for $id {
             #[inline]
             fn header_name() -> &'static str {
-                $n
+                static NAME: &'static str = $n;
+                NAME
             }
             #[inline]
-            fn parse_header(raw: &[Vec<u8>]) -> $crate::Result<Self> {
+            fn parse_header(raw: &$crate::header::Raw) -> $crate::Result<Self> {
                 // FIXME: Return None if no item is in $id::Only
                 if raw.len() == 1 {
-                    if raw[0] == b"*" {
+                    if &raw[0] == b"*" {
                         return Ok($id::Any)
                     }
                 }
                 $crate::header::parsing::from_comma_delimited(raw).map($id::Items)
             }
-        }
-        impl $crate::header::HeaderFormat for $id {
             #[inline]
-            fn fmt_header(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                match *self {
-                    $id::Any => f.write_str("*"),
-                    $id::Items(ref fields) => $crate::header::parsing::fmt_comma_delimited(
-                        f, &fields[..])
-                }
+            fn fmt_header(&self, f: &mut $crate::header::Formatter) -> ::std::fmt::Result {
+                f.fmt_line(self)
             }
         }
         impl ::std::fmt::Display for $id {
             #[inline]
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                use $crate::header::HeaderFormat;
-                self.fmt_header(f)
+                match *self {
+                    $id::Any => f.write_str("*"),
+                    $id::Items(ref fields) => $crate::header::parsing::fmt_comma_delimited(
+                        f, &fields[..])
+                }
             }
         }
     };
@@ -342,6 +411,22 @@ macro_rules! header {
         header! {
             $(#[$a])*
             ($id, $n) => [$item]
+        }
+
+        __hyper__tm! { $id, $tm { $($tf)* }}
+    };
+    ($(#[$a:meta])*($id:ident, $n:expr) => danger [$item:ty] $tm:ident{$($tf:item)*}) => {
+        header! {
+            $(#[$a])*
+            ($id, $n) => danger [$item]
+        }
+
+        __hyper__tm! { $id, $tm { $($tf)* }}
+    };
+    ($(#[$a:meta])*($id:ident, $n:expr) => Cow[$item:ty] $tm:ident{$($tf:item)*}) => {
+        header! {
+            $(#[$a])*
+            ($id, $n) => Cow[$item]
         }
 
         __hyper__tm! { $id, $tm { $($tf)* }}
@@ -378,6 +463,7 @@ mod content_disposition;
 mod content_encoding;
 mod content_language;
 mod content_length;
+mod content_location;
 mod content_range;
 mod content_type;
 mod cookie;
@@ -392,6 +478,7 @@ mod if_modified_since;
 mod if_none_match;
 mod if_range;
 mod if_unmodified_since;
+mod last_event_id;
 mod last_modified;
 mod link;
 mod location;
@@ -399,13 +486,17 @@ mod origin;
 mod pragma;
 mod prefer;
 mod preference_applied;
+mod proxy_authorization;
 mod range;
 mod referer;
 mod referrer_policy;
+mod retry_after;
 mod server;
 mod set_cookie;
 mod strict_transport_security;
+mod te;
 mod transfer_encoding;
 mod upgrade;
 mod user_agent;
 mod vary;
+mod warning;

@@ -10,7 +10,7 @@ use language_tags::LanguageTag;
 use std::fmt;
 use unicase;
 
-use header::{Header, HeaderFormat, parsing};
+use header::{Header, Raw, parsing};
 use header::parsing::{parse_extended_value, http_percent_encode};
 use header::shared::Charset;
 
@@ -91,10 +91,11 @@ pub struct ContentDisposition {
 
 impl Header for ContentDisposition {
     fn header_name() -> &'static str {
-        "Content-Disposition"
+        static NAME: &'static str = "Content-Disposition";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<ContentDisposition> {
+    fn parse_header(raw: &Raw) -> ::Result<ContentDisposition> {
         parsing::from_one_raw_str(raw).and_then(|s: String| {
             let mut sections = s.split(';');
             let disposition = match sections.next() {
@@ -145,12 +146,10 @@ impl Header for ContentDisposition {
             Ok(cd)
         })
     }
-}
 
-impl HeaderFormat for ContentDisposition {
     #[inline]
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self, f)
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
@@ -202,10 +201,10 @@ mod tests {
 
     #[test]
     fn test_parse_header() {
-        assert!(ContentDisposition::parse_header([b"".to_vec()].as_ref()).is_err());
+        assert!(ContentDisposition::parse_header(&"".into()).is_err());
 
-        let a = [b"form-data; dummy=3; name=upload;\r\n filename=\"sample.png\"".to_vec()];
-        let a: ContentDisposition = ContentDisposition::parse_header(a.as_ref()).unwrap();
+        let a = "form-data; dummy=3; name=upload;\r\n filename=\"sample.png\"".into();
+        let a: ContentDisposition = ContentDisposition::parse_header(&a).unwrap();
         let b = ContentDisposition {
             disposition: DispositionType::Ext("form-data".to_owned()),
             parameters: vec![
@@ -218,8 +217,8 @@ mod tests {
         };
         assert_eq!(a, b);
 
-        let a = [b"attachment; filename=\"image.jpg\"".to_vec()];
-        let a: ContentDisposition = ContentDisposition::parse_header(a.as_ref()).unwrap();
+        let a = "attachment; filename=\"image.jpg\"".into();
+        let a: ContentDisposition = ContentDisposition::parse_header(&a).unwrap();
         let b = ContentDisposition {
             disposition: DispositionType::Attachment,
             parameters: vec![
@@ -230,8 +229,8 @@ mod tests {
         };
         assert_eq!(a, b);
 
-        let a = [b"attachment; filename*=UTF-8''%c2%a3%20and%20%e2%82%ac%20rates".to_vec()];
-        let a: ContentDisposition = ContentDisposition::parse_header(a.as_ref()).unwrap();
+        let a = "attachment; filename*=UTF-8''%c2%a3%20and%20%e2%82%ac%20rates".into();
+        let a: ContentDisposition = ContentDisposition::parse_header(&a).unwrap();
         let b = ContentDisposition {
             disposition: DispositionType::Attachment,
             parameters: vec![
@@ -246,19 +245,19 @@ mod tests {
 
     #[test]
     fn test_display() {
-        let a = [b"attachment; filename*=UTF-8'en'%C2%A3%20and%20%E2%82%AC%20rates".to_vec()];
-        let as_string = ::std::str::from_utf8(&(a[0])).unwrap();
-        let a: ContentDisposition = ContentDisposition::parse_header(a.as_ref()).unwrap();
+        let as_string = "attachment; filename*=UTF-8'en'%C2%A3%20and%20%E2%82%AC%20rates";
+        let a = as_string.into();
+        let a: ContentDisposition = ContentDisposition::parse_header(&a).unwrap();
         let display_rendered = format!("{}",a);
         assert_eq!(as_string, display_rendered);
 
-        let a = [b"attachment; filename*=UTF-8''black%20and%20white.csv".to_vec()];
-        let a: ContentDisposition = ContentDisposition::parse_header(a.as_ref()).unwrap();
+        let a = "attachment; filename*=UTF-8''black%20and%20white.csv".into();
+        let a: ContentDisposition = ContentDisposition::parse_header(&a).unwrap();
         let display_rendered = format!("{}",a);
         assert_eq!("attachment; filename=\"black and white.csv\"".to_owned(), display_rendered);
 
-        let a = [b"attachment; filename=colourful.csv".to_vec()];
-        let a: ContentDisposition = ContentDisposition::parse_header(a.as_ref()).unwrap();
+        let a = "attachment; filename=colourful.csv".into();
+        let a: ContentDisposition = ContentDisposition::parse_header(&a).unwrap();
         let display_rendered = format!("{}",a);
         assert_eq!("attachment; filename=\"colourful.csv\"".to_owned(), display_rendered);
     }

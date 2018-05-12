@@ -1,9 +1,8 @@
 use std::fmt;
 use std::str;
-
 use unicase;
 
-use header::{Header, HeaderFormat};
+use header::{Header, Raw};
 
 /// The `Expect` header.
 ///
@@ -28,19 +27,19 @@ pub enum Expect {
 
 impl Header for Expect {
     fn header_name() -> &'static str {
-        "Expect"
+        static NAME: &'static str = "Expect";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<Expect> {
-        if raw.len() == 1 {
+    fn parse_header(raw: &Raw) -> ::Result<Expect> {
+        if let Some(line) = raw.one() {
             let text = unsafe {
                 // safe because:
-                // 1. we just checked raw.len == 1
-                // 2. we don't actually care if it's utf8, we just want to
+                // 1. we don't actually care if it's utf8, we just want to
                 //    compare the bytes with the "case" normalized. If it's not
                 //    utf8, then the byte comparison will fail, and we'll return
                 //    None. No big deal.
-                str::from_utf8_unchecked(raw.get_unchecked(0))
+                str::from_utf8_unchecked(line)
             };
             if unicase::eq_ascii(text, "100-continue") {
                 Ok(Expect::Continue)
@@ -51,11 +50,9 @@ impl Header for Expect {
             Err(::Error::Header)
         }
     }
-}
 
-impl HeaderFormat for Expect {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 

@@ -127,7 +127,7 @@ pub fn qitem<T>(item: T) -> QualityItem<T> {
 }
 
 /// Convenience function to create a `Quality` from a float or integer.
-///
+/// 
 /// Implemented for `u16` and `f32`. Panics if value is out of range.
 pub fn q<T: IntoQuality>(val: T) -> Quality {
     val.into_quality()

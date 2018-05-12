@@ -8,7 +8,7 @@ use mime::Mime;
 use language_tags::LanguageTag;
 
 use header::parsing;
-use header::{Header, HeaderFormat};
+use header::{Header, Raw};
 
 /// The `Link` header, defined in
 /// [RFC5988](http://tools.ietf.org/html/rfc5988#section-5)
@@ -391,12 +391,12 @@ impl Header for Link {
         NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<Link> {
+    fn parse_header(raw: &Raw) -> ::Result<Link> {
         // If more that one `Link` headers are present in a request's
         // headers they are combined in a single `Link` header containing
         // all the `link-value`s present in each of those `Link` headers.
         raw.iter()
-            .map(|v| parsing::from_raw_str::<Link>(&v))
+            .map(parsing::from_raw_str::<Link>)
             .fold(None, |p, c| {
                 match (p, c) {
                     (None, c) => Some(c),
@@ -411,17 +411,15 @@ impl Header for Link {
             })
             .unwrap_or(Err(::Error::Header))
     }
-}
 
-impl HeaderFormat for Link {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt_delimited(f, self.values.as_slice(), ", ", ("", ""))
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
 impl fmt::Display for Link {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_header(f)
+        fmt_delimited(f, self.values.as_slice(), ", ", ("", ""))
     }
 }
 
@@ -919,7 +917,7 @@ mod tests {
 
         let expected_link = Link::new(vec![link_value]);
 
-        let link = Header::parse_header(&vec![link_header.to_vec()]);
+        let link = Header::parse_header(&vec![link_header.to_vec()].into());
         assert_eq!(link.ok(), Some(expected_link));
     }
 
@@ -940,7 +938,7 @@ mod tests {
 
         let expected_link = Link::new(vec![first_link, second_link]);
 
-        let link = Header::parse_header(&vec![link_header.to_vec()]);
+        let link = Header::parse_header(&vec![link_header.to_vec()].into());
         assert_eq!(link.ok(), Some(expected_link));
     }
 
@@ -964,7 +962,7 @@ mod tests {
 
         let expected_link = Link::new(vec![link_value]);
 
-        let link = Header::parse_header(&vec![link_header.to_vec()]);
+        let link = Header::parse_header(&vec![link_header.to_vec()].into());
         assert_eq!(link.ok(), Some(expected_link));
     }
 
@@ -1032,34 +1030,34 @@ mod tests {
 
     #[test]
     fn test_link_parsing_errors() {
-        let link_a = b"http://example.com/TheBook/chapter2; \
+        let link_a  = b"http://example.com/TheBook/chapter2; \
             rel=\"previous\"; rev=next; title=\"previous chapter\"";
 
-        let mut err: Result<Link, _> = Header::parse_header(&vec![link_a.to_vec()]);
+        let mut err: Result<Link, _> = Header::parse_header(&vec![link_a.to_vec()].into());
         assert_eq!(err.is_err(), true);
 
         let link_b = b"<http://example.com/TheBook/chapter2>; \
             =\"previous\"; rev=next; title=\"previous chapter\"";
 
-        err = Header::parse_header(&vec![link_b.to_vec()]);
+        err = Header::parse_header(&vec![link_b.to_vec()].into());
         assert_eq!(err.is_err(), true);
 
         let link_c = b"<http://example.com/TheBook/chapter2>; \
             rel=; rev=next; title=\"previous chapter\"";
 
-        err = Header::parse_header(&vec![link_c.to_vec()]);
+        err = Header::parse_header(&vec![link_c.to_vec()].into());
         assert_eq!(err.is_err(), true);
 
         let link_d = b"<http://example.com/TheBook/chapter2>; \
             rel=\"previous\"; rev=next; title=";
 
-        err = Header::parse_header(&vec![link_d.to_vec()]);
+        err = Header::parse_header(&vec![link_d.to_vec()].into());
         assert_eq!(err.is_err(), true);
 
         let link_e = b"<http://example.com/TheBook/chapter2>; \
             rel=\"previous\"; rev=next; attr=unknown";
 
-        err = Header::parse_header(&vec![link_e.to_vec()]);
+        err = Header::parse_header(&vec![link_e.to_vec()].into());
         assert_eq!(err.is_err(), true);
     }
 

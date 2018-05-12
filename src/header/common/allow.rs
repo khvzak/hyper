@@ -23,7 +23,7 @@ header! {
     ///
     /// ```
     /// use hyper::header::{Headers, Allow};
-    /// use hyper::method::Method;
+    /// use hyper::Method;
     ///
     /// let mut headers = Headers::new();
     /// headers.set(
@@ -33,7 +33,7 @@ header! {
     ///
     /// ```
     /// use hyper::header::{Headers, Allow};
-    /// use hyper::method::Method;
+    /// use hyper::Method;
     ///
     /// let mut headers = Headers::new();
     /// headers.set(

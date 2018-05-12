@@ -64,10 +64,7 @@ impl Request<Fresh> {
         let mut headers = Headers::new();
         {
             let (host, port) = try!(get_host_and_port(&url));
-            headers.set(Host {
-                hostname: host.to_owned(),
-                port: Some(port),
-            });
+            headers.set(Host::new(host.to_owned(), port));
         }
 
         Ok(Request::with_headers_and_message(method, url, headers, message))

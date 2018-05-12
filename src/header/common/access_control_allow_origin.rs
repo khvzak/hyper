@@ -1,7 +1,7 @@
 use std::fmt::{self, Display};
 use std::str;
 
-use header::{Header, HeaderFormat};
+use header::{Header, Raw};
 
 /// The `Access-Control-Allow-Origin` response header,
 /// part of [CORS](http://www.w3.org/TR/cors/#access-control-allow-origin-response-header)
@@ -58,35 +58,34 @@ pub enum AccessControlAllowOrigin {
 
 impl Header for AccessControlAllowOrigin {
     fn header_name() -> &'static str {
-        "Access-Control-Allow-Origin"
+        static NAME: &'static str = "Access-Control-Allow-Origin";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<AccessControlAllowOrigin> {
-        if raw.len() != 1 {
-            return Err(::Error::Header)
-        }
-        let value = unsafe { raw.get_unchecked(0) };
-        Ok(match &value[..] {
+    fn parse_header(raw: &Raw) -> ::Result<AccessControlAllowOrigin> {
+        if let Some(line) = raw.one() {
+            Ok(match line {
                 b"*" => AccessControlAllowOrigin::Any,
                 b"null" => AccessControlAllowOrigin::Null,
-                _ => AccessControlAllowOrigin::Value(try!(str::from_utf8(value)).into())
-        })
-    }
-}
-
-impl HeaderFormat for AccessControlAllowOrigin {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            AccessControlAllowOrigin::Any => f.write_str("*"),
-            AccessControlAllowOrigin::Null => f.write_str("null"),
-            AccessControlAllowOrigin::Value(ref url) => Display::fmt(url, f),
+                _ => AccessControlAllowOrigin::Value(try!(str::from_utf8(line)).into())
+            })
+        } else {
+            Err(::Error::Header)
         }
+    }
+
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
 impl Display for AccessControlAllowOrigin {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        self.fmt_header(f)
+        match *self {
+            AccessControlAllowOrigin::Any => f.write_str("*"),
+            AccessControlAllowOrigin::Null => f.write_str("null"),
+            AccessControlAllowOrigin::Value(ref url) => Display::fmt(url, f),
+        }
     }
 }
 

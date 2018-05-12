@@ -4,56 +4,122 @@ pub struct VecMap<K, V> {
 }
 
 impl<K: PartialEq, V> VecMap<K, V> {
+    #[inline]
     pub fn new() -> VecMap<K, V> {
         VecMap {
-            vec: Vec::new()
+            vec: Vec::with_capacity(0)
         }
     }
 
+    #[inline]
+    pub fn with_capacity(cap: usize) -> VecMap<K, V> {
+        VecMap {
+            vec: Vec::with_capacity(cap)
+        }
+    }
+
+    #[inline]
     pub fn insert(&mut self, key: K, value: V) {
-        match self.find(&key) {
-            Some(pos) => self.vec[pos] = (key, value),
-            None => self.vec.push((key, value))
+        // not using entry or find_mut because of borrowck
+        for entry in &mut self.vec {
+            if key == entry.0 {
+                *entry = (key, value);
+                return;
+            }
         }
+        self.vec.push((key, value));
     }
 
+    // #[inline]
+    // pub fn insert_pos(&mut self, key: K, value: V, pos: usize) {
+    //     debug_assert!(!self.contains_key(&key));
+    //     self.vec.insert(pos, (key, value))
+    // }
+
+    #[inline]
+    pub fn append(&mut self, key: K, value: V) {
+        self.vec.push((key, value));
+    }
+
+    #[inline]
     pub fn entry(&mut self, key: K) -> Entry<K, V> {
-        match self.find(&key) {
+        match self.pos(&key) {
             Some(pos) => Entry::Occupied(OccupiedEntry {
-                vec: self,
+                vec: &mut self.vec,
                 pos: pos,
             }),
             None => Entry::Vacant(VacantEntry {
-                vec: self,
+                vec: &mut self.vec,
                 key: key,
             })
         }
     }
 
-    pub fn get(&self, key: &K) -> Option<&V> {
-        self.find(key).map(move |pos| &self.vec[pos].1)
+    #[inline]
+    pub fn get<K2: PartialEq<K> + ?Sized>(&self, key: &K2) -> Option<&V> {
+        self.find(key).map(|entry| &entry.1)
     }
 
-    pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
-        self.find(key).map(move |pos| &mut self.vec[pos].1)
+    #[inline]
+    pub fn get_mut<K2: PartialEq<K> + ?Sized>(&mut self, key: &K2) -> Option<&mut V> {
+        self.find_mut(key).map(|entry| &mut entry.1)
     }
 
-    pub fn contains_key(&self, key: &K) -> bool {
+    #[inline]
+    pub fn contains_key<K2: PartialEq<K> + ?Sized>(&self, key: &K2) -> bool {
         self.find(key).is_some()
     }
 
+    #[inline]
     pub fn len(&self) -> usize { self.vec.len() }
+
+    #[inline]
     pub fn iter(&self) -> ::std::slice::Iter<(K, V)> {
         self.vec.iter()
     }
-    pub fn remove(&mut self, key: &K) -> Option<V> {
-        self.find(key).map(|pos| self.vec.remove(pos)).map(|(_, v)| v)
+
+    #[inline]
+    pub fn remove<K2: PartialEq<K> + ?Sized>(&mut self, key: &K2) -> Option<V> {
+        self.pos(key).map(|pos| self.vec.remove(pos)).map(|(_, v)| v)
     }
+
+    #[inline]
+    pub fn remove_all<K2: PartialEq<K> + ?Sized>(&mut self, key: &K2) {
+        let len = self.vec.len();
+        for i in (0..len).rev() {
+            if key == &self.vec[i].0 {
+                self.vec.remove(i);
+            }
+        }
+    }
+
+    #[inline]
     pub fn clear(&mut self) {
         self.vec.clear();
     }
 
-    fn find(&self, key: &K) -> Option<usize> {
+    #[inline]
+    fn find<K2: PartialEq<K> + ?Sized>(&self, key: &K2) -> Option<&(K, V)> {
+        for entry in &self.vec {
+            if key == &entry.0 {
+                return Some(entry);
+            }
+        }
+        None
+    }
+
+    #[inline]
+    fn find_mut<K2: PartialEq<K> + ?Sized>(&mut self, key: &K2) -> Option<&mut (K, V)> {
+        for entry in &mut self.vec {
+            if key == &entry.0 {
+                return Some(entry);
+            }
+        }
+        None
+    }
+
+    #[inline]
+    fn pos<K2: PartialEq<K> + ?Sized>(&self, key: &K2) -> Option<usize> {
         self.vec.iter().position(|entry| key == &entry.0)
     }
 }
@@ -64,26 +130,25 @@ pub enum Entry<'a, K: 'a, V: 'a> {
 }
 
 pub struct VacantEntry<'a, K: 'a, V: 'a> {
-    vec: &'a mut VecMap<K, V>,
+    vec: &'a mut Vec<(K, V)>,
     key: K,
 }
 
 impl<'a, K, V> VacantEntry<'a, K, V> {
     pub fn insert(self, val: V) -> &'a mut V {
-        let vec = self.vec;
-        vec.vec.push((self.key, val));
-        let pos = vec.vec.len() - 1;
-        &mut vec.vec[pos].1
+        self.vec.push((self.key, val));
+        let pos = self.vec.len() - 1;
+        &mut self.vec[pos].1
     }
 }
 
 pub struct OccupiedEntry<'a, K: 'a, V: 'a> {
-    vec: &'a mut VecMap<K, V>,
+    vec: &'a mut Vec<(K, V)>,
     pos: usize,
 }
 
 impl<'a, K, V> OccupiedEntry<'a, K, V> {
     pub fn into_mut(self) -> &'a mut V {
-        &mut self.vec.vec[self.pos].1
+        &mut self.vec[self.pos].1
     }
 }

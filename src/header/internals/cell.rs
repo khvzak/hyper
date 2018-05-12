@@ -59,6 +59,11 @@ impl<V: ?Sized + Any + 'static> PtrMapCell<V> {
     }
 
     #[inline]
+    pub fn with_one(key: TypeId, val: Box<V>)  -> PtrMapCell<V> {
+        PtrMapCell(UnsafeCell::new(PtrMap::One(key, val)))
+    }
+
+    #[inline]
     pub fn get(&self, key: TypeId) -> Option<&V> {
         let map = unsafe { &*self.0.get() };
         match *map {
@@ -84,6 +89,24 @@ impl<V: ?Sized + Any + 'static> PtrMapCell<V> {
             },
             PtrMap::Many(ref mut hm) => hm.get_mut(&key)
         }.map(|val| &mut **val)
+    }
+
+    #[inline]
+    pub fn into_value(self, key: TypeId) -> Option<Box<V>> {
+        // UnsafeCell::into_inner was unsafe forever, and 1.25 has removed
+        // the unsafe modifier, resulting in a warning. This allow can be
+        // removed when the minimum supported rust version is at least 1.25.
+        #[allow(unused_unsafe)]
+        let map = unsafe { self.0.into_inner() };
+        match map {
+            PtrMap::Empty => None,
+            PtrMap::One(id, v) => if id == key {
+                Some(v)
+            } else {
+                None
+            },
+            PtrMap::Many(mut hm) => hm.remove(&key)
+        }
     }
 
     #[inline]

@@ -1,9 +1,10 @@
+use base64::{encode, decode};
 use std::any::Any;
 use std::fmt::{self, Display};
 use std::str::{FromStr, from_utf8};
 use std::ops::{Deref, DerefMut};
-use base64::{encode, decode};
-use header::{Header, HeaderFormat};
+
+use header::{Header, Raw};
 
 /// `Authorization` header, defined in [RFC7235](https://tools.ietf.org/html/rfc7235#section-4.2)
 ///
@@ -76,34 +77,40 @@ impl<S: Scheme> DerefMut for Authorization<S> {
 
 impl<S: Scheme + Any> Header for Authorization<S> where <S as FromStr>::Err: 'static {
     fn header_name() -> &'static str {
-        "Authorization"
+        static NAME: &'static str = "Authorization";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<Authorization<S>> {
-        if raw.len() != 1 {
-            return Err(::Error::Header);
-        }
-        let header = try!(from_utf8(unsafe { &raw.get_unchecked(0)[..] }));
-        if let Some(scheme) = <S as Scheme>::scheme() {
-            if header.starts_with(scheme) && header.len() > scheme.len() + 1 {
-                match header[scheme.len() + 1..].parse::<S>().map(Authorization) {
+    fn parse_header(raw: &Raw) -> ::Result<Authorization<S>> {
+        if let Some(line) = raw.one() {
+            let header = try!(from_utf8(line));
+            if let Some(scheme) = <S as Scheme>::scheme() {
+                if header.starts_with(scheme) && header.len() > scheme.len() + 1 {
+                    match header[scheme.len() + 1..].parse::<S>().map(Authorization) {
+                        Ok(h) => Ok(h),
+                        Err(_) => Err(::Error::Header)
+                    }
+                } else {
+                    Err(::Error::Header)
+                }
+            } else {
+                match header.parse::<S>().map(Authorization) {
                     Ok(h) => Ok(h),
                     Err(_) => Err(::Error::Header)
                 }
-            } else {
-                Err(::Error::Header)
             }
         } else {
-            match header.parse::<S>().map(Authorization) {
-                Ok(h) => Ok(h),
-                Err(_) => Err(::Error::Header)
-            }
+            Err(::Error::Header)
         }
+    }
+
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
-impl<S: Scheme + Any> HeaderFormat for Authorization<S> where <S as FromStr>::Err: 'static {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<S: Scheme> fmt::Display for Authorization<S> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(scheme) = <S as Scheme>::scheme() {
             try!(write!(f, "{} ", scheme))
         };
@@ -198,25 +205,25 @@ impl FromStr for Basic {
 #[derive(Clone, PartialEq, Debug)]
 ///Token holder for Bearer Authentication, most often seen with oauth
 pub struct Bearer {
-	///Actual bearer token as a string
-	pub token: String
+    ///Actual bearer token as a string
+    pub token: String
 }
 
 impl Scheme for Bearer {
-	fn scheme() -> Option<&'static str> {
-		Some("Bearer")
-	}
+    fn scheme() -> Option<&'static str> {
+        Some("Bearer")
+    }
 
-	fn fmt_scheme(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{}", self.token)
-	}
+    fn fmt_scheme(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.token)
+    }
 }
 
 impl FromStr for Bearer {
-	type Err = ::Error;
-	fn from_str(s: &str) -> ::Result<Bearer> {
-		Ok(Bearer { token: s.to_owned()})
-	}
+    type Err = ::Error;
+    fn from_str(s: &str) -> ::Result<Bearer> {
+        Ok(Bearer { token: s.to_owned()})
+    }
 }
 
 #[cfg(test)]
@@ -233,8 +240,7 @@ mod tests {
 
     #[test]
     fn test_raw_auth_parse() {
-        let header: Authorization<String> = Header::parse_header(
-            &[b"foo bar baz".to_vec()]).unwrap();
+        let header: Authorization<String> = Header::parse_header(&b"foo bar baz".as_ref().into()).unwrap();
         assert_eq!(header.0, "foo bar baz");
     }
 
@@ -258,7 +264,7 @@ mod tests {
     #[test]
     fn test_basic_auth_parse() {
         let auth: Authorization<Basic> = Header::parse_header(
-            &[b"Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==".to_vec()]).unwrap();
+            &b"Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==".as_ref().into()).unwrap();
         assert_eq!(auth.0.username, "Aladdin");
         assert_eq!(auth.0.password, Some("open sesame".to_owned()));
     }
@@ -266,12 +272,12 @@ mod tests {
     #[test]
     fn test_basic_auth_parse_no_password() {
         let auth: Authorization<Basic> = Header::parse_header(
-            &[b"Basic QWxhZGRpbjo=".to_vec()]).unwrap();
+            &b"Basic QWxhZGRpbjo=".as_ref().into()).unwrap();
         assert_eq!(auth.0.username, "Aladdin");
         assert_eq!(auth.0.password, Some("".to_owned()));
     }
 
-	#[test]
+    #[test]
     fn test_bearer_auth() {
         let mut headers = Headers::new();
         headers.set(Authorization(
@@ -284,7 +290,7 @@ mod tests {
     #[test]
     fn test_bearer_auth_parse() {
         let auth: Authorization<Bearer> = Header::parse_header(
-            &[b"Bearer fpKL54jvWmEGVoRdCNjG".to_vec()]).unwrap();
+            &b"Bearer fpKL54jvWmEGVoRdCNjG".as_ref().into()).unwrap();
         assert_eq!(auth.0.token, "fpKL54jvWmEGVoRdCNjG");
     }
 }

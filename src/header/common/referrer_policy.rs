@@ -2,7 +2,7 @@ use std::fmt;
 #[allow(unused, deprecated)]
 use std::ascii::AsciiExt;
 
-use header::{Header, HeaderFormat, parsing};
+use header::{Header, Raw, parsing};
 
 /// `Referrer-Policy` header, part of
 /// [Referrer Policy](https://www.w3.org/TR/referrer-policy/#referrer-policy-header)
@@ -60,7 +60,7 @@ impl Header for ReferrerPolicy {
         NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<ReferrerPolicy> {
+    fn parse_header(raw: &Raw) -> ::Result<ReferrerPolicy> {
         use self::ReferrerPolicy::*;
         // See https://www.w3.org/TR/referrer-policy/#determine-policy-for-token
         let headers: Vec<String> = try!(parsing::from_comma_delimited(raw));
@@ -82,11 +82,9 @@ impl Header for ReferrerPolicy {
 
         Err(::Error::Header)
     }
-}
 
-impl HeaderFormat for ReferrerPolicy {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
@@ -108,16 +106,16 @@ impl fmt::Display for ReferrerPolicy {
 
 #[test]
 fn test_parse_header() {
-    let a: ReferrerPolicy = Header::parse_header([b"origin".to_vec()].as_ref()).unwrap();
+    let a: ReferrerPolicy = Header::parse_header(&"origin".into()).unwrap();
     let b = ReferrerPolicy::Origin;
     assert_eq!(a, b);
-    let e: ::Result<ReferrerPolicy> = Header::parse_header([b"foobar".to_vec()].as_ref());
+    let e: ::Result<ReferrerPolicy> = Header::parse_header(&"foobar".into());
     assert!(e.is_err());
 }
 
 #[test]
 fn test_rightmost_header() {
-    let a: ReferrerPolicy = Header::parse_header(&["same-origin, origin, foobar".into()]).unwrap();
+    let a: ReferrerPolicy = Header::parse_header(&"same-origin, origin, foobar".into()).unwrap();
     let b = ReferrerPolicy::Origin;
     assert_eq!(a, b);
 }

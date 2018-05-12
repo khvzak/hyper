@@ -1,6 +1,7 @@
 use std::fmt;
 use std::str::FromStr;
-use header::{Header, HeaderFormat};
+
+use header::{Header, Raw};
 use header::parsing::{from_comma_delimited, fmt_comma_delimited};
 
 /// `Prefer` header, defined in [RFC7240](http://tools.ietf.org/html/rfc7240)
@@ -55,10 +56,11 @@ __hyper__deref!(Prefer => Vec<Preference>);
 
 impl Header for Prefer {
     fn header_name() -> &'static str {
-        "Prefer"
+        static NAME: &'static str = "Prefer";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<Prefer> {
+    fn parse_header(raw: &Raw) -> ::Result<Prefer> {
         let preferences = try!(from_comma_delimited(raw));
         if !preferences.is_empty() {
             Ok(Prefer(preferences))
@@ -66,11 +68,9 @@ impl Header for Prefer {
             Err(::Error::Header)
         }
     }
-}
 
-impl HeaderFormat for Prefer {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
@@ -169,14 +169,14 @@ mod tests {
 
     #[test]
     fn test_parse_multiple_headers() {
-        let prefer = Header::parse_header(&[b"respond-async, return=representation".to_vec()]);
+        let prefer = Header::parse_header(&"respond-async, return=representation".into());
         assert_eq!(prefer.ok(), Some(Prefer(vec![Preference::RespondAsync,
                                            Preference::ReturnRepresentation])))
     }
 
     #[test]
     fn test_parse_argument() {
-        let prefer = Header::parse_header(&[b"wait=100, handling=lenient, respond-async".to_vec()]);
+        let prefer = Header::parse_header(&"wait=100, handling=lenient, respond-async".into());
         assert_eq!(prefer.ok(), Some(Prefer(vec![Preference::Wait(100),
                                            Preference::HandlingLenient,
                                            Preference::RespondAsync])))
@@ -184,14 +184,14 @@ mod tests {
 
     #[test]
     fn test_parse_quote_form() {
-        let prefer = Header::parse_header(&[b"wait=\"200\", handling=\"strict\"".to_vec()]);
+        let prefer = Header::parse_header(&"wait=\"200\", handling=\"strict\"".into());
         assert_eq!(prefer.ok(), Some(Prefer(vec![Preference::Wait(200),
                                            Preference::HandlingStrict])))
     }
 
     #[test]
     fn test_parse_extension() {
-        let prefer = Header::parse_header(&[b"foo, bar=baz, baz; foo; bar=baz, bux=\"\"; foo=\"\", buz=\"some parameter\"".to_vec()]);
+        let prefer = Header::parse_header(&"foo, bar=baz, baz; foo; bar=baz, bux=\"\"; foo=\"\", buz=\"some parameter\"".into());
         assert_eq!(prefer.ok(), Some(Prefer(vec![
             Preference::Extension("foo".to_owned(), "".to_owned(), vec![]),
             Preference::Extension("bar".to_owned(), "baz".to_owned(), vec![]),
@@ -202,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_fail_with_args() {
-        let prefer: ::Result<Prefer> = Header::parse_header(&[b"respond-async; foo=bar".to_vec()]);
+        let prefer: ::Result<Prefer> = Header::parse_header(&"respond-async; foo=bar".into());
         assert_eq!(prefer.ok(), None);
     }
 }

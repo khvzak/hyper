@@ -2,7 +2,7 @@ use std::fmt;
 #[allow(unused, deprecated)]
 use std::ascii::AsciiExt;
 
-use header::{Header, HeaderFormat, parsing};
+use header::{Header, Raw, parsing};
 
 /// The `Pragma` header defined by HTTP/1.0.
 ///
@@ -44,10 +44,11 @@ pub enum Pragma {
 
 impl Header for Pragma {
     fn header_name() -> &'static str {
-        "Pragma"
+        static NAME: &'static str = "Pragma";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<Pragma> {
+    fn parse_header(raw: &Raw) -> ::Result<Pragma> {
         parsing::from_one_raw_str(raw).and_then(|s: String| {
             let slice = &s.to_ascii_lowercase()[..];
             match slice {
@@ -56,11 +57,9 @@ impl Header for Pragma {
             }
         })
     }
-}
 
-impl HeaderFormat for Pragma {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
@@ -75,12 +74,12 @@ impl fmt::Display for Pragma {
 
 #[test]
 fn test_parse_header() {
-    let a: Pragma = Header::parse_header([b"no-cache".to_vec()].as_ref()).unwrap();
+    let a: Pragma = Header::parse_header(&"no-cache".into()).unwrap();
     let b = Pragma::NoCache;
     assert_eq!(a, b);
-    let c: Pragma = Header::parse_header([b"FoObar".to_vec()].as_ref()).unwrap();
+    let c: Pragma = Header::parse_header(&"FoObar".into()).unwrap();
     let d = Pragma::Ext("FoObar".to_owned());
     assert_eq!(c, d);
-    let e: ::Result<Pragma> = Header::parse_header([b"".to_vec()].as_ref());
+    let e: ::Result<Pragma> = Header::parse_header(&"".into());
     assert_eq!(e.ok(), None);
 }

@@ -1,7 +1,7 @@
-use header::{Header, HeaderFormat};
 use std::fmt;
 use std::str::from_utf8;
 
+use header::{Header, Raw};
 
 /// `Set-Cookie` header, defined [RFC6265](http://tools.ietf.org/html/rfc6265#section-4.1)
 ///
@@ -75,10 +75,11 @@ __hyper__deref!(SetCookie => Vec<String>);
 
 impl Header for SetCookie {
     fn header_name() -> &'static str {
-        "Set-Cookie"
+        static NAME: &'static str = "Set-Cookie";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<SetCookie> {
+    fn parse_header(raw: &Raw) -> ::Result<SetCookie> {
         let mut set_cookies = Vec::with_capacity(raw.len());
         for set_cookies_raw in raw {
             if let Ok(s) = from_utf8(&set_cookies_raw[..]) {
@@ -92,18 +93,8 @@ impl Header for SetCookie {
             Err(::Error::Header)
         }
     }
-}
 
-impl HeaderFormat for SetCookie {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.0.len() == 1 {
-            write!(f, "{}", &self.0[0])
-        } else {
-            panic!("SetCookie with multiple cookies cannot be used with fmt_header, must use fmt_multi_header");
-        }
-    }
-
-    fn fmt_multi_header(&self, f: &mut ::header::MultilineFormatter) -> fmt::Result {
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
         for cookie in &self.0 {
             try!(f.fmt_line(cookie));
         }

@@ -65,7 +65,7 @@ use std::time::Duration;
 use url::Url;
 use url::ParseError as UrlError;
 
-use header::{Headers, Header, HeaderFormat};
+use header::{Headers, Header};
 use header::{ContentLength, Host, Location};
 use method::Method;
 use net::{NetworkConnector, NetworkStream, SslClient};
@@ -268,7 +268,7 @@ impl<'a> RequestBuilder<'a> {
     }
 
     /// Add an individual new header to the request.
-    pub fn header<H: Header + HeaderFormat>(mut self, header: H) -> RequestBuilder<'a> {
+    pub fn header<H: Header>(mut self, header: H) -> RequestBuilder<'a> {
         {
             let headers = match self.headers {
                 Some(ref mut h) => h,
@@ -309,10 +309,7 @@ impl<'a> RequestBuilder<'a> {
                 }
 
                 let mut h = Headers::new();
-                h.set(Host {
-                    hostname: host.to_owned(),
-                    port: Some(port),
-                });
+                h.set(Host::new(host.to_owned(), port));
                 if let Some(ref headers) = headers {
                     h.extend(headers.iter());
                 }
@@ -344,7 +341,7 @@ impl<'a> RequestBuilder<'a> {
             let loc = {
                 // punching borrowck here
                 let loc = match res.headers.get::<Location>() {
-                    Some(&Location(ref loc)) => {
+                    Some(loc) => {
                         Some(url.join(loc))
                     }
                     None => {
@@ -675,7 +672,7 @@ mod tests {
         client.set_redirect_policy(RedirectPolicy::FollowAll);
 
         let res = client.get("http://127.0.0.1").send().unwrap();
-        assert_eq!(res.headers.get(), Some(&Server("mock3".to_owned())));
+        assert_eq!(res.headers.get(), Some(&Server::new("mock3")));
     }
 
     #[test]
@@ -683,7 +680,7 @@ mod tests {
         let mut client = Client::with_connector(MockRedirectPolicy);
         client.set_redirect_policy(RedirectPolicy::FollowNone);
         let res = client.get("http://127.0.0.1").send().unwrap();
-        assert_eq!(res.headers.get(), Some(&Server("mock1".to_owned())));
+        assert_eq!(res.headers.get(), Some(&Server::new("mock1")));
     }
 
     #[test]
@@ -694,7 +691,7 @@ mod tests {
         let mut client = Client::with_connector(MockRedirectPolicy);
         client.set_redirect_policy(RedirectPolicy::FollowIf(follow_if));
         let res = client.get("http://127.0.0.1").send().unwrap();
-        assert_eq!(res.headers.get(), Some(&Server("mock2".to_owned())));
+        assert_eq!(res.headers.get(), Some(&Server::new("mock2")));
     }
 
     mock_connector!(Issue640Connector {

@@ -1,7 +1,8 @@
 use std::fmt::{self, Display};
 use std::str;
 use unicase;
-use header::{Header, HeaderFormat};
+
+use header::{Header, Raw};
 
 /// `Access-Control-Allow-Credentials` header, part of
 /// [CORS](http://www.w3.org/TR/cors/#access-control-allow-headers-response-header)
@@ -44,19 +45,19 @@ const ACCESS_CONTROL_ALLOW_CREDENTIALS_TRUE: &'static str = "true";
 
 impl Header for AccessControlAllowCredentials {
     fn header_name() -> &'static str {
-        "Access-Control-Allow-Credentials"
+        static NAME: &'static str = "Access-Control-Allow-Credentials";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<AccessControlAllowCredentials> {
-        if raw.len() == 1 {
+    fn parse_header(raw: &Raw) -> ::Result<AccessControlAllowCredentials> {
+        if let Some(line) = raw.one() {
             let text = unsafe {
                 // safe because:
-                // 1. we just checked raw.len == 1
-                // 2. we don't actually care if it's utf8, we just want to
+                // 1. we don't actually care if it's utf8, we just want to
                 //    compare the bytes with the "case" normalized. If it's not
                 //    utf8, then the byte comparison will fail, and we'll return
                 //    None. No big deal.
-                str::from_utf8_unchecked(raw.get_unchecked(0))
+                str::from_utf8_unchecked(line)
             };
             if unicase::eq_ascii(text, ACCESS_CONTROL_ALLOW_CREDENTIALS_TRUE) {
                 return Ok(AccessControlAllowCredentials);
@@ -64,17 +65,15 @@ impl Header for AccessControlAllowCredentials {
         }
         Err(::Error::Header)
     }
-}
 
-impl HeaderFormat for AccessControlAllowCredentials {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("true")
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
 impl Display for AccessControlAllowCredentials {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        self.fmt_header(f)
+        f.write_str("true")
     }
 }
 

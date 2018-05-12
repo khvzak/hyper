@@ -1,5 +1,6 @@
 use std::fmt;
-use header::{Header, HeaderFormat, Preference};
+
+use header::{Header, Raw, Preference};
 use header::parsing::{from_comma_delimited, fmt_comma_delimited};
 
 /// `Preference-Applied` header, defined in [RFC7240](http://tools.ietf.org/html/rfc7240)
@@ -54,10 +55,11 @@ __hyper__deref!(PreferenceApplied => Vec<Preference>);
 
 impl Header for PreferenceApplied {
     fn header_name() -> &'static str {
-        "Preference-Applied"
+        static NAME: &'static str = "Preference-Applied";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<PreferenceApplied> {
+    fn parse_header(raw: &Raw) -> ::Result<PreferenceApplied> {
         let preferences = try!(from_comma_delimited(raw));
         if !preferences.is_empty() {
             Ok(PreferenceApplied(preferences))
@@ -65,11 +67,9 @@ impl Header for PreferenceApplied {
             Err(::Error::Header)
         }
     }
-}
 
-impl HeaderFormat for PreferenceApplied {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
@@ -91,17 +91,17 @@ impl fmt::Display for PreferenceApplied {
 
 #[cfg(test)]
 mod tests {
-    use header::{HeaderFormat, Preference};
+    use header::Preference;
     use super::*;
 
     #[test]
     fn test_format_ignore_parameters() {
         assert_eq!(
-            format!("{}", &PreferenceApplied(vec![Preference::Extension(
+            format!("{}", PreferenceApplied(vec![Preference::Extension(
                 "foo".to_owned(),
                 "bar".to_owned(),
                 vec![("bar".to_owned(), "foo".to_owned()), ("buz".to_owned(), "".to_owned())]
-            )]) as &(HeaderFormat + Send + Sync)),
+            )])),
             "foo=bar".to_owned()
         );
     }

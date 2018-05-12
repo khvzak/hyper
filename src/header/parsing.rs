@@ -1,18 +1,22 @@
 //! Utility functions for Header implementations.
 
 use language_tags::LanguageTag;
+use percent_encoding;
 use std::str;
 use std::str::FromStr;
 use std::fmt::{self, Display};
-use url::percent_encoding;
 
+use header::Raw;
 use header::shared::Charset;
 
 /// Reads a single raw string when parsing a header.
-pub fn from_one_raw_str<T: str::FromStr>(raw: &[Vec<u8>]) -> ::Result<T> {
-    if raw.len() != 1 || unsafe { raw.get_unchecked(0) } == b"" { return Err(::Error::Header) }
-    // we JUST checked that raw.len() == 1, so raw[0] WILL exist.
-    from_raw_str(& unsafe { raw.get_unchecked(0) })
+pub fn from_one_raw_str<T: str::FromStr>(raw: &Raw) -> ::Result<T> {
+    if let Some(line) = raw.one() {
+        if !line.is_empty() {
+            return from_raw_str(line)
+        }
+    }
+    Err(::Error::Header)
 }
 
 /// Reads a raw string into a value.
@@ -23,7 +27,7 @@ pub fn from_raw_str<T: str::FromStr>(raw: &[u8]) -> ::Result<T> {
 
 /// Reads a comma-delimited raw header into a Vec.
 #[inline]
-pub fn from_comma_delimited<T: str::FromStr, S: AsRef<[u8]>>(raw: &[S]) -> ::Result<Vec<T>> {
+pub fn from_comma_delimited<T: str::FromStr>(raw: &Raw) -> ::Result<Vec<T>> {
     let mut result = Vec::new();
     for s in raw {
         let s = try!(str::from_utf8(s.as_ref()));
@@ -154,7 +158,7 @@ pub fn http_percent_encode(f: &mut fmt::Formatter, bytes: &[u8]) -> fmt::Result 
 }
 
 mod percent_encoding_http {
-    use url::percent_encoding;
+    use percent_encoding;
 
     // internal module because macro is hard-coded to make a public item
     // but we don't want to public export this item

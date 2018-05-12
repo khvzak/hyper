@@ -1,7 +1,8 @@
+use std::borrow::Cow;
 use std::fmt;
 use std::str::FromStr;
 
-use header::{Header, HeaderFormat};
+use header::{Header, Raw};
 use header::parsing::from_one_raw_str;
 
 /// The `Host` header.
@@ -9,20 +10,13 @@ use header::parsing::from_one_raw_str;
 /// HTTP/1.1 requires that all requests include a `Host` header, and so hyper
 /// client requests add one automatically.
 ///
-/// Currently is just a String, but it should probably become a better type,
-/// like `url::Host` or something.
-///
 /// # Examples
-///
 /// ```
 /// use hyper::header::{Headers, Host};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(
-///     Host{
-///         hostname: "hyper.rs".to_owned(),
-///         port: None,
-///     }
+///     Host::new("hyper.rs", None)
 /// );
 /// ```
 /// ```
@@ -30,42 +24,59 @@ use header::parsing::from_one_raw_str;
 ///
 /// let mut headers = Headers::new();
 /// headers.set(
-///     Host{
-///         hostname: "hyper.rs".to_owned(),
-///         port: Some(8080),
-///     }
+///     Host::new("hyper.rs", 8080)
 /// );
 /// ```
 #[derive(Clone, PartialEq, Debug)]
 pub struct Host {
-    /// The hostname, such a example.domain.
-    pub hostname: String,
-    /// An optional port number.
-    pub port: Option<u16>
+    hostname: Cow<'static, str>,
+    port: Option<u16>
+}
+
+impl Host {
+    /// Create a `Host` header, providing the hostname and optional port.
+    pub fn new<H, P>(hostname: H, port: P) -> Host
+    where H: Into<Cow<'static, str>>,
+          P: Into<Option<u16>>
+    {
+        Host {
+            hostname: hostname.into(),
+            port: port.into(),
+        }
+    }
+
+    /// Get the hostname, such as example.domain.
+    pub fn hostname(&self) -> &str {
+        self.hostname.as_ref()
+    }
+
+    /// Get the optional port number.
+    pub fn port(&self) -> Option<u16> {
+        self.port
+    }
 }
 
 impl Header for Host {
     fn header_name() -> &'static str {
-        "Host"
+        static NAME: &'static str = "Host";
+        NAME
     }
 
-    fn parse_header(raw: &[Vec<u8>]) -> ::Result<Host> {
-        from_one_raw_str(raw)
+    fn parse_header(raw: &Raw) -> ::Result<Host> {
+       from_one_raw_str(raw)
     }
-}
 
-impl HeaderFormat for Host {
-    fn fmt_header(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.port {
-            None | Some(80) | Some(443) => f.write_str(&self.hostname[..]),
-            Some(port) => write!(f, "{}:{}", self.hostname, port)
-        }
+    fn fmt_header(&self, f: &mut ::header::Formatter) -> fmt::Result {
+        f.fmt_line(self)
     }
 }
 
 impl fmt::Display for Host {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_header(f)
+        match self.port {
+            None | Some(80) | Some(443) => f.write_str(&self.hostname[..]),
+            Some(port) => write!(f, "{}:{}", self.hostname, port)
+        }
     }
 }
 
@@ -83,7 +94,7 @@ impl FromStr for Host {
         };
 
         Ok(Host {
-            hostname: hostname.to_owned(),
+            hostname: hostname.to_owned().into(),
             port: port,
         })
     }
@@ -97,36 +108,20 @@ mod tests {
 
     #[test]
     fn test_host() {
-        let host = Header::parse_header([b"foo.com".to_vec()].as_ref());
-        assert_eq!(host.ok(), Some(Host {
-            hostname: "foo.com".to_owned(),
-            port: None
-        }));
+        let host = Header::parse_header(&vec![b"foo.com".to_vec()].into());
+        assert_eq!(host.ok(), Some(Host::new("foo.com", None)));
 
+        let host = Header::parse_header(&vec![b"foo.com:8080".to_vec()].into());
+        assert_eq!(host.ok(), Some(Host::new("foo.com", Some(8080))));
 
-        let host = Header::parse_header([b"foo.com:8080".to_vec()].as_ref());
-        assert_eq!(host.ok(), Some(Host {
-            hostname: "foo.com".to_owned(),
-            port: Some(8080)
-        }));
+        let host = Header::parse_header(&vec![b"foo.com".to_vec()].into());
+        assert_eq!(host.ok(), Some(Host::new("foo.com", None)));
 
-        let host = Header::parse_header([b"foo.com".to_vec()].as_ref());
-        assert_eq!(host.ok(), Some(Host {
-            hostname: "foo.com".to_owned(),
-            port: None
-        }));
+        let host = Header::parse_header(&vec![b"[::1]:8080".to_vec()].into());
+        assert_eq!(host.ok(), Some(Host::new("[::1]", Some(8080))));
 
-        let host = Header::parse_header([b"[::1]:8080".to_vec()].as_ref());
-        assert_eq!(host.ok(), Some(Host {
-            hostname: "[::1]".to_owned(),
-            port: Some(8080)
-        }));
-
-        let host = Header::parse_header([b"[::1]".to_vec()].as_ref());
-        assert_eq!(host.ok(), Some(Host {
-            hostname: "[::1]".to_owned(),
-            port: None
-        }));
+        let host = Header::parse_header(&vec![b"[::1]".to_vec()].into());
+        assert_eq!(host.ok(), Some(Host::new("[::1]", None)));
     }
 }
 

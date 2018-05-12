@@ -114,7 +114,8 @@ header! {
 
         #[test]
         fn test_fuzzing1() {
-            let header = Accept::parse_header(&[b"chunk#;e".to_vec()]);
+            let raw: Raw = "chunk#;e".into();
+            let header = Accept::parse_header(&raw);
             assert!(header.is_ok());
         }
     }

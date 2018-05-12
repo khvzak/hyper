@@ -129,14 +129,14 @@
 //!
 
 extern crate base64;
+extern crate bytes;
 extern crate time;
 #[macro_use] extern crate url;
 extern crate unicase;
 extern crate httparse;
 extern crate num_cpus;
-
+extern crate percent_encoding;
 extern crate language_tags;
-
 extern crate mime as mime_crate;
 
 #[macro_use]
@@ -149,7 +149,7 @@ extern crate test;
 pub use url::Url;
 pub use client::Client;
 pub use error::{Result, Error};
-pub use method::Method::{Get, Head, Post, Delete};
+pub use method::Method::{self, Get, Head, Post, Delete};
 pub use status::StatusCode::{Ok, BadRequest, NotFound};
 pub use server::Server;
 pub use language_tags::LanguageTag;

@@ -130,8 +130,8 @@ mod tests {
     use unicase::Ascii;
 
     fn parse_option(header: Vec<u8>) -> Connection {
-        let val = vec![header];
-        let connection: Connection = Header::parse_header(&val[..]).unwrap();
+        let val = header.into();
+        let connection: Connection = Header::parse_header(&val).unwrap();
         connection
     }
 
