@@ -1,6 +1,6 @@
 //! Server Responses
 //!
-//! These are responses sent by a `hyper::Server` to clients, after
+//! These are responses sent by a `hyper_sync::Server` to clients, after
 //! receiving a request.
 use std::any::{Any, TypeId};
 use std::marker::PhantomData;
@@ -146,7 +146,7 @@ impl<'a> Response<'a, Fresh> {
     /// # Example
     ///
     /// ```
-    /// # use hyper::server::Response;
+    /// # use hyper_sync::server::Response;
     /// fn handler(res: Response) {
     ///     res.send(b"Hello World!").unwrap();
     /// }
@@ -155,9 +155,9 @@ impl<'a> Response<'a, Fresh> {
     /// The above is the same, but shorter, than the longer:
     ///
     /// ```
-    /// # use hyper::server::Response;
+    /// # use hyper_sync::server::Response;
     /// use std::io::Write;
-    /// use hyper::header::ContentLength;
+    /// use hyper_sync::header::ContentLength;
     /// fn handler(mut res: Response) {
     ///     let body = b"Hello World!";
     ///     res.headers_mut().set(ContentLength(body.len() as u64));

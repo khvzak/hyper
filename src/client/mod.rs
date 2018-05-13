@@ -8,11 +8,11 @@
 //! ## GET
 //!
 //! ```no_run
-//! # use hyper::Client;
+//! # use hyper_sync::Client;
 //! let client = Client::new();
 //!
 //! let res = client.get("http://example.domain").send().unwrap();
-//! assert_eq!(res.status, hyper::Ok);
+//! assert_eq!(res.status, hyper_sync::Ok);
 //! ```
 //!
 //! The returned value is a `Response`, which provides easy access to
@@ -22,14 +22,14 @@
 //! ## POST
 //!
 //! ```no_run
-//! # use hyper::Client;
+//! # use hyper_sync::Client;
 //! let client = Client::new();
 //!
 //! let res = client.post("http://example.domain")
 //!     .body("foo=bar")
 //!     .send()
 //!     .unwrap();
-//! assert_eq!(res.status, hyper::Ok);
+//! assert_eq!(res.status, hyper_sync::Ok);
 //! ```
 //!
 //! # Sync
@@ -38,7 +38,7 @@
 //! and make multiple requests simultaneously.
 //!
 //! ```no_run
-//! # use hyper::Client;
+//! # use hyper_sync::Client;
 //! use std::sync::Arc;
 //! use std::thread;
 //!
@@ -245,7 +245,7 @@ pub struct RequestBuilder<'a> {
     // stops downstream crates having to remonomorphise and recompile
     // the code, which can take a while, since `send` is fairly large.
     // (For an extreme example, a tiny crate containing
-    // `hyper::Client::new().get("x").send().unwrap();` took ~4s to
+    // `hyper_sync::Client::new().get("x").send().unwrap();` took ~4s to
     // compile with a generic RequestBuilder, but 2s with this scheme,)
     url: Result<Url, UrlError>,
     headers: Option<Headers>,

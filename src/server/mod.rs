@@ -14,7 +14,7 @@
 //!
 //!
 //! ```no_run
-//! use hyper::server::{Server, Request, Response};
+//! use hyper_sync::server::{Server, Request, Response};
 //!
 //! fn hello(req: Request, res: Response) {
 //!     // handle things here
@@ -29,7 +29,7 @@
 //! ```no_run
 //! use std::sync::Mutex;
 //! use std::sync::mpsc::{channel, Sender};
-//! use hyper::server::{Handler, Server, Request, Response};
+//! use hyper_sync::server::{Handler, Server, Request, Response};
 //!
 //! struct SenderHandler {
 //!     sender: Mutex<Sender<&'static str>>
@@ -53,7 +53,7 @@
 //!
 //! ```no_run
 //! use std::sync::atomic::{AtomicUsize, Ordering};
-//! use hyper::server::{Server, Request, Response};
+//! use hyper_sync::server::{Server, Request, Response};
 //!
 //! let counter = AtomicUsize::new(0);
 //! Server::http("0.0.0.0:0").unwrap().handle(move |req: Request, res: Response| {
@@ -73,12 +73,12 @@
 //!
 //! ```no_run
 //! use std::io;
-//! use hyper::server::{Server, Request, Response};
-//! use hyper::status::StatusCode;
+//! use hyper_sync::server::{Server, Request, Response};
+//! use hyper_sync::status::StatusCode;
 //!
 //! Server::http("0.0.0.0:0").unwrap().handle(|mut req: Request, mut res: Response| {
 //!     match req.method {
-//!         hyper::Post => {
+//!         hyper_sync::Post => {
 //!             io::copy(&mut req, &mut res.start().unwrap()).unwrap();
 //!         },
 //!         _ => *res.status_mut() = StatusCode::MethodNotAllowed
@@ -100,7 +100,7 @@
 //! 1. You are typically never notified that your late header is doing nothing.
 //! 2. There's a runtime cost to checking on every write.
 //!
-//! Instead, hyper handles this statically, or at compile-time. A
+//! Instead, hyper_sync handles this statically, or at compile-time. A
 //! `Response<Fresh>` includes a `headers_mut()` method, allowing you add more
 //! headers. It also does not implement `Write`, so you can't accidentally
 //! write early. Once the "head" of the response is correct, you can "send" it
@@ -212,7 +212,7 @@ impl Server<HttpListener> {
 impl<S: SslServer + Clone + Send> Server<HttpsListener<S>> {
     /// Creates a new server that will handle `HttpStream`s over SSL.
     ///
-    /// You can use any SSL implementation, as long as implements `hyper::net::Ssl`.
+    /// You can use any SSL implementation, as long as implements `hyper_sync::net::Ssl`.
     pub fn https<A: ToSocketAddrs>(addr: A, ssl: S) -> ::Result<Server<HttpsListener<S>>> {
         HttpsListener::new(addr, ssl).map(Server::new)
     }

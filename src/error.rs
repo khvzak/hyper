@@ -25,7 +25,7 @@ use self::Error::{
 
 pub use url::ParseError;
 
-/// Result type often returned from methods that can have hyper `Error`s.
+/// Result type often returned from methods that can have hyper_sync `Error`s.
 pub type Result<T> = ::std::result::Result<T, Error>;
 
 /// A set of errors that can occur parsing HTTP streams.

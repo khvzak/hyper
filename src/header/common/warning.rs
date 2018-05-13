@@ -36,7 +36,7 @@ use header::parsing::from_one_raw_str;
 /// # Examples
 ///
 /// ```
-/// use hyper::header::{Headers, Warning};
+/// use hyper_sync::header::{Headers, Warning};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(
@@ -50,7 +50,7 @@ use header::parsing::from_one_raw_str;
 /// ```
 ///
 /// ```
-/// use hyper::header::{Headers, HttpDate, Warning};
+/// use hyper_sync::header::{Headers, HttpDate, Warning};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(
@@ -65,7 +65,7 @@ use header::parsing::from_one_raw_str;
 ///
 /// ```
 /// use std::time::SystemTime;
-/// use hyper::header::{Headers, Warning};
+/// use hyper_sync::header::{Headers, Warning};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(

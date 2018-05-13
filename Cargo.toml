@@ -1,16 +1,17 @@
 [package]
 
-name = "hyper"
+name = "hyper-sync"
 version = "0.10.13" # remember to update html_root_url
-description = "A modern HTTP library."
+description = "A modern HTTP library (synchronous)."
 readme = "README.md"
-homepage = "http://hyper.rs"
-documentation = "https://docs.rs/hyper"
-repository = "https://github.com/hyperium/hyper"
+homepage = "https://github.com/khvzak/hyper-sync"
+documentation = "https://docs.rs/hyper-sync"
+repository = "https://github.com/khvzak/hyper-sync"
 license = "MIT"
 authors = ["Sean McArthur <sean.monstar@gmail.com>",
-           "Jonathan Reem <jonathan.reem@gmail.com>"]
-keywords = ["http", "hyper", "hyperium"]
+           "Jonathan Reem <jonathan.reem@gmail.com>",
+           "Aleksandr Orlenko <zxteam@gmail.com>"]
+keywords = ["http", "hyper"]
 categories = ["web-programming::http-client", "web-programming::http-server"]
 
 include = [

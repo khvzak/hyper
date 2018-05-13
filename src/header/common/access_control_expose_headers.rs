@@ -19,12 +19,12 @@ header! {
     /// # Examples
     ///
     /// ```
-    /// # extern crate hyper;
+    /// # extern crate hyper_sync;
     /// # extern crate unicase;
     /// # fn main() {
     /// // extern crate unicase;
     ///
-    /// use hyper::header::{Headers, AccessControlExposeHeaders};
+    /// use hyper_sync::header::{Headers, AccessControlExposeHeaders};
     /// use unicase::Ascii;
     ///
     /// let mut headers = Headers::new();
@@ -38,12 +38,12 @@ header! {
     /// ```
     ///
     /// ```
-    /// # extern crate hyper;
+    /// # extern crate hyper_sync;
     /// # extern crate unicase;
     /// # fn main() {
     /// // extern crate unicase;
     ///
-    /// use hyper::header::{Headers, AccessControlExposeHeaders};
+    /// use hyper_sync::header::{Headers, AccessControlExposeHeaders};
     /// use unicase::Ascii;
     ///
     /// let mut headers = Headers::new();

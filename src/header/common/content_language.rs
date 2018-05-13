@@ -25,9 +25,9 @@ header! {
     /// # Examples
     ///
     /// ```
-    /// # extern crate hyper;
+    /// # extern crate hyper_sync;
     /// # #[macro_use] extern crate language_tags;
-    /// # use hyper::header::{Headers, ContentLanguage, qitem};
+    /// # use hyper_sync::header::{Headers, ContentLanguage, qitem};
     /// #
     /// # fn main() {
     /// let mut headers = Headers::new();
@@ -40,9 +40,9 @@ header! {
     /// ```
     ///
     /// ```
-    /// # extern crate hyper;
+    /// # extern crate hyper_sync;
     /// # #[macro_use] extern crate language_tags;
-    /// # use hyper::header::{Headers, ContentLanguage, qitem};
+    /// # use hyper_sync::header::{Headers, ContentLanguage, qitem};
     /// #
     /// # fn main() {
     ///

@@ -2,7 +2,7 @@
 
 #[macro_use]
 // TODO: only import header!, blocked by https://github.com/rust-lang/rust/issues/25003
-extern crate hyper;
+extern crate hyper_sync;
 
 #[cfg(feature = "serde-serialization")]
 extern crate serde;

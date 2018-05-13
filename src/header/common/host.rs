@@ -7,12 +7,12 @@ use header::parsing::from_one_raw_str;
 
 /// The `Host` header.
 ///
-/// HTTP/1.1 requires that all requests include a `Host` header, and so hyper
+/// HTTP/1.1 requires that all requests include a `Host` header, and so hyper_sync
 /// client requests add one automatically.
 ///
 /// # Examples
 /// ```
-/// use hyper::header::{Headers, Host};
+/// use hyper_sync::header::{Headers, Host};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(
@@ -20,7 +20,7 @@ use header::parsing::from_one_raw_str;
 /// );
 /// ```
 /// ```
-/// use hyper::header::{Headers, Host};
+/// use hyper_sync::header::{Headers, Host};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(

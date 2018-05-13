@@ -14,7 +14,7 @@ use client::scheme::Scheme;
 
 use self::stale::{StaleCheck, Stale};
 
-/// The `NetworkConnector` that behaves as a connection pool used by hyper's `Client`.
+/// The `NetworkConnector` that behaves as a connection pool used by hyper_sync's `Client`.
 pub struct Pool<C: NetworkConnector> {
     connector: C,
     inner: Arc<Mutex<PoolImpl<<C as NetworkConnector>::Stream>>>,

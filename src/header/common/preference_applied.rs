@@ -25,7 +25,7 @@ use header::parsing::{from_comma_delimited, fmt_comma_delimited};
 /// # Examples
 ///
 /// ```
-/// use hyper::header::{Headers, PreferenceApplied, Preference};
+/// use hyper_sync::header::{Headers, PreferenceApplied, Preference};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(
@@ -34,7 +34,7 @@ use header::parsing::{from_comma_delimited, fmt_comma_delimited};
 /// ```
 ///
 /// ```
-/// use hyper::header::{Headers, PreferenceApplied, Preference};
+/// use hyper_sync::header::{Headers, PreferenceApplied, Preference};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(

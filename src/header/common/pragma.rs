@@ -22,14 +22,14 @@ use header::{Header, Raw, parsing};
 /// # Examples
 ///
 /// ```
-/// use hyper::header::{Headers, Pragma};
+/// use hyper_sync::header::{Headers, Pragma};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(Pragma::NoCache);
 /// ```
 ///
 /// ```
-/// use hyper::header::{Headers, Pragma};
+/// use hyper_sync::header::{Headers, Pragma};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(Pragma::Ext("foobar".to_owned()));

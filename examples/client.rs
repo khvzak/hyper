@@ -1,13 +1,13 @@
 #![deny(warnings)]
-extern crate hyper;
+extern crate hyper_sync;
 
 extern crate env_logger;
 
 use std::env;
 use std::io;
 
-use hyper::Client;
-use hyper::header::Connection;
+use hyper_sync::Client;
+use hyper_sync::header::Connection;
 
 fn main() {
     env_logger::init();

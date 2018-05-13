@@ -21,10 +21,10 @@ header! {
     /// # Example
     ///
     /// ```
-    /// use hyper::header::{Headers, Server};
+    /// use hyper_sync::header::{Headers, Server};
     ///
     /// let mut headers = Headers::new();
-    /// headers.set(Server::new("hyper/0.5.2"));
+    /// headers.set(Server::new("hyper_sync/0.5.2"));
     /// ```
     // TODO: Maybe parse as defined in the spec?
     (Server, "Server") => Cow[str]

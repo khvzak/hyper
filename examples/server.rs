@@ -1,12 +1,12 @@
 #![deny(warnings)]
-extern crate hyper;
+extern crate hyper_sync;
 extern crate env_logger;
 
 use std::io::copy;
 
-use hyper::{Get, Post};
-use hyper::server::{Server, Request, Response};
-use hyper::uri::RequestUri::AbsolutePath;
+use hyper_sync::{Get, Post};
+use hyper_sync::server::{Server, Request, Response};
+use hyper_sync::uri::RequestUri::AbsolutePath;
 
 macro_rules! try_return(
     ($e:expr) => {{
@@ -26,7 +26,7 @@ fn echo(mut req: Request, mut res: Response) {
             },
             (&Post, "/echo") => (), // fall through, fighting mutable borrows
             _ => {
-                *res.status_mut() = hyper::NotFound;
+                *res.status_mut() = hyper_sync::NotFound;
                 return;
             }
         },

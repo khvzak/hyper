@@ -32,14 +32,14 @@ header! {
     /// # Examples
     ///
     /// ```
-    /// use hyper::header::{Headers, IfNoneMatch};
+    /// use hyper_sync::header::{Headers, IfNoneMatch};
     ///
     /// let mut headers = Headers::new();
     /// headers.set(IfNoneMatch::Any);
     /// ```
     ///
     /// ```
-    /// use hyper::header::{Headers, IfNoneMatch, EntityTag};
+    /// use hyper_sync::header::{Headers, IfNoneMatch, EntityTag};
     ///
     /// let mut headers = Headers::new();
     /// headers.set(

@@ -15,7 +15,7 @@ use self::internal::IntoQuality;
 ///
 /// The quality value is defined as a number between 0 and 1 with three decimal places. This means
 /// there are 1001 possible values. Since floating point numbers are not exact and the smallest
-/// floating point data type (`f32`) consumes four bytes, hyper uses an `u16` value to store the
+/// floating point data type (`f32`) consumes four bytes, hyper_sync uses an `u16` value to store the
 /// quality internally. For performance reasons you may set quality directly to a value between
 /// 0 and 1000 e.g. `Quality(532)` matches the quality `q=0.532`.
 ///

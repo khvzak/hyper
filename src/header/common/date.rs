@@ -19,7 +19,7 @@ header! {
     /// # Example
     ///
     /// ```
-    /// use hyper::header::{Headers, Date};
+    /// use hyper_sync::header::{Headers, Date};
     /// use std::time::SystemTime;
     ///
     /// let mut headers = Headers::new();

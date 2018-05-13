@@ -32,14 +32,14 @@ header! {
     /// # Examples
     ///
     /// ```
-    /// use hyper::header::{Headers, Upgrade, Protocol, ProtocolName};
+    /// use hyper_sync::header::{Headers, Upgrade, Protocol, ProtocolName};
     ///
     /// let mut headers = Headers::new();
     /// headers.set(Upgrade(vec![Protocol::new(ProtocolName::WebSocket, None)]));
     /// ```
     ///
     /// ```
-    /// use hyper::header::{Headers, Upgrade, Protocol, ProtocolName};
+    /// use hyper_sync::header::{Headers, Upgrade, Protocol, ProtocolName};
     ///
     /// let mut headers = Headers::new();
     /// headers.set(
@@ -91,7 +91,7 @@ pub enum ProtocolName {
     WebSocket,
     /// `h2c` value, HTTP/2 over cleartext TCP
     H2c,
-    /// Any other protocol name not known to hyper
+    /// Any other protocol name not known to hyper_sync
     Unregistered(String),
 }
 

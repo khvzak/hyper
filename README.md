@@ -1,17 +1,17 @@
-# hyper
+# hyper-sync
 
-[![Travis Build Status](https://travis-ci.org/hyperium/hyper.svg?branch=master)](https://travis-ci.org/hyperium/hyper)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/tb0n55fjs5tohdfo/branch/master?svg=true)](https://ci.appveyor.com/project/seanmonstar/hyper)
-[![Coverage Status](https://coveralls.io/repos/hyperium/hyper/badge.svg?branch=master)](https://coveralls.io/r/hyperium/hyper?branch=master)
+[![Travis Build Status](https://travis-ci.org/khvzak/hyper-sync.svg?branch=master)](https://travis-ci.org/khvzak/hyper-sync)
+[![Coverage Status](https://coveralls.io/repos/github/khvzak/hyper-sync/badge.svg?branch=master)](https://coveralls.io/github/khvzak/hyper-sync?branch=master)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![crates.io](http://meritbadge.herokuapp.com/hyper)](https://crates.io/crates/hyper)
+[![crates.io](http://meritbadge.herokuapp.com/hyper-sync)](https://crates.io/crates/hyper-sync)
+[![Released API docs](https://docs.rs/hyper-sync/badge.svg)](https://docs.rs/hyper-sync)
 
 A Modern HTTP library for Rust.
+Fork of the original hyper library (v0.10.x)
 
 ### Documentation
 
-- [Stable](http://hyperium.github.io/hyper)
-- [Master](http://hyperium.github.io/hyper/master)
+- [Stable](http://docs.rs/hyper-sync)
 
 ## Overview
 
@@ -22,18 +22,17 @@ layer over "stringly-typed" HTTP.
 Hyper offers both an HTTP client and server which can be used to drive
 complex web applications written entirely in Rust.
 
-The documentation is located at [http://hyperium.github.io/hyper](http://hyperium.github.io/hyper).
+The documentation is located at [http://docs.rs/hyper-sync](http://docs.rs/hyper-sync).
 
 ## Example
 
 ### Hello World Server:
 
 ```rust
-extern crate hyper;
+extern crate hyper_sync;
 
-use hyper::Server;
-use hyper::server::Request;
-use hyper::server::Response;
+use hyper_sync::Server;
+use hyper_sync::server::{Request, Response};
 
 fn hello(_: Request, res: Response) {
     res.send(b"Hello World!").unwrap();
@@ -48,12 +47,12 @@ fn main() {
 ### Client:
 
 ```rust
-extern crate hyper;
+extern crate hyper_sync;
 
 use std::io::Read;
 
-use hyper::Client;
-use hyper::header::Connection;
+use hyper_sync::Client;
+use hyper_sync::header::Connection;
 
 fn main() {
     // Create a client.

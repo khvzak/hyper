@@ -1,6 +1,6 @@
 //! Headers container, and common header fields.
 //!
-//! hyper has the opinion that Headers should be strongly-typed, because that's
+//! hyper_sync has the opinion that Headers should be strongly-typed, because that's
 //! why we're using Rust in the first place. To set or get any header, an object
 //! must implement the `Header` trait from this module. Several common headers
 //! are already provided, such as `Host`, `ContentType`, `UserAgent`, and others.
@@ -20,8 +20,8 @@
 //! many wrapper-style headers.
 //!
 //! ```
-//! #[macro_use] extern crate hyper;
-//! use hyper::header::Headers;
+//! #[macro_use] extern crate hyper_sync;
+//! use hyper_sync::header::Headers;
 //! header! { (XRequestGuid, "X-Request-Guid") => [String] }
 //!
 //! fn main () {
@@ -41,7 +41,7 @@
 //!
 //! ```
 //! use std::fmt;
-//! use hyper::header::{self, Header, Raw};
+//! use hyper_sync::header::{self, Header, Raw};
 //!
 //! #[derive(Debug, Clone, Copy)]
 //! struct Dnt(bool);
@@ -51,7 +51,7 @@
 //!         "DNT"
 //!     }
 //!
-//!     fn parse_header(raw: &Raw) -> hyper::Result<Dnt> {
+//!     fn parse_header(raw: &Raw) -> hyper_sync::Result<Dnt> {
 //!         if raw.len() == 1 {
 //!             let line = &raw[0];
 //!             if line.len() == 1 {
@@ -63,7 +63,7 @@
 //!                 }
 //!             }
 //!         }
-//!         Err(hyper::Error::Header)
+//!         Err(hyper_sync::Error::Header)
 //!     }
 //!
 //!     fn fmt_header(&self, f: &mut header::Formatter) -> fmt::Result {
@@ -424,8 +424,8 @@ impl Headers {
     /// Example:
     ///
     /// ```
-    /// # use hyper::header::Headers;
-    /// # use hyper::header::ContentType;
+    /// # use hyper_sync::header::Headers;
+    /// # use hyper_sync::header::ContentType;
     /// # let mut headers = Headers::new();
     /// headers.set(ContentType::json());
     /// assert!(headers.has::<ContentType>());
@@ -468,7 +468,7 @@ impl Headers {
     /// Example:
     ///
     /// ```
-    /// # use hyper::header::Headers;
+    /// # use hyper_sync::header::Headers;
     /// # let mut headers = Headers::new();
     /// # headers.set_raw("content-type", "text/plain");
     /// let raw = headers.get_raw("content-type").unwrap();
@@ -485,7 +485,7 @@ impl Headers {
     /// Example:
     ///
     /// ```
-    /// # use hyper::header::Headers;
+    /// # use hyper_sync::header::Headers;
     /// # let mut headers = Headers::new();
     /// headers.set_raw("content-length", b"1".as_ref());
     /// headers.set_raw("content-length", "2");
@@ -508,7 +508,7 @@ impl Headers {
     /// Example:
     ///
     /// ```
-    /// # use hyper::header::Headers;
+    /// # use hyper_sync::header::Headers;
     /// # let mut headers = Headers::new();
     /// headers.append_raw("x-foo", b"bar".to_vec());
     /// headers.append_raw("x-foo", b"quux".to_vec());

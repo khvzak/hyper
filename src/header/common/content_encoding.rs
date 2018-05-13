@@ -25,14 +25,14 @@ header! {
     /// # Examples
     ///
     /// ```
-    /// use hyper::header::{Headers, ContentEncoding, Encoding};
+    /// use hyper_sync::header::{Headers, ContentEncoding, Encoding};
     /// 
     /// let mut headers = Headers::new();
     /// headers.set(ContentEncoding(vec![Encoding::Chunked]));
     /// ```
     ///
     /// ```
-    /// use hyper::header::{Headers, ContentEncoding, Encoding};
+    /// use hyper_sync::header::{Headers, ContentEncoding, Encoding};
     /// 
     /// let mut headers = Headers::new();
     /// headers.set(

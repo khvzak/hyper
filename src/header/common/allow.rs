@@ -22,8 +22,8 @@ header! {
     /// # Examples
     ///
     /// ```
-    /// use hyper::header::{Headers, Allow};
-    /// use hyper::Method;
+    /// use hyper_sync::header::{Headers, Allow};
+    /// use hyper_sync::Method;
     ///
     /// let mut headers = Headers::new();
     /// headers.set(
@@ -32,8 +32,8 @@ header! {
     /// ```
     ///
     /// ```
-    /// use hyper::header::{Headers, Allow};
-    /// use hyper::Method;
+    /// use hyper_sync::header::{Headers, Allow};
+    /// use hyper_sync::Method;
     ///
     /// let mut headers = Headers::new();
     /// headers.set(

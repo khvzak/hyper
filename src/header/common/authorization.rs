@@ -27,13 +27,13 @@ use header::{Header, Raw};
 /// # Examples
 ///
 /// ```
-/// use hyper::header::{Headers, Authorization};
+/// use hyper_sync::header::{Headers, Authorization};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(Authorization("let me in".to_owned()));
 /// ```
 /// ```
-/// use hyper::header::{Headers, Authorization, Basic};
+/// use hyper_sync::header::{Headers, Authorization, Basic};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(
@@ -47,7 +47,7 @@ use header::{Header, Raw};
 /// ```
 ///
 /// ```
-/// use hyper::header::{Headers, Authorization, Bearer};
+/// use hyper_sync::header::{Headers, Authorization, Bearer};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(

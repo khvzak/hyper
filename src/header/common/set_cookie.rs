@@ -58,7 +58,7 @@ use header::{Header, Raw};
 /// # Example
 ///
 /// ```
-/// use hyper::header::{Headers, SetCookie};
+/// use hyper_sync::header::{Headers, SetCookie};
 ///
 /// let mut headers = Headers::new();
 ///

@@ -30,10 +30,10 @@ header! {
     /// # Example
     ///
     /// ```
-    /// use hyper::header::{Headers, UserAgent};
+    /// use hyper_sync::header::{Headers, UserAgent};
     ///
     /// let mut headers = Headers::new();
-    /// headers.set(UserAgent::new("hyper/0.5.2"));
+    /// headers.set(UserAgent::new("hyper_sync/0.5.2"));
     /// ```
     (UserAgent, "User-Agent") => Cow[str]
 

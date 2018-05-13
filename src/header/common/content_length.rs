@@ -34,7 +34,7 @@ use header::{Header, Raw, parsing};
 /// # Example
 ///
 /// ```
-/// use hyper::header::{Headers, ContentLength};
+/// use hyper_sync::header::{Headers, ContentLength};
 ///
 /// let mut headers = Headers::new();
 /// headers.set(ContentLength(1024u64));
